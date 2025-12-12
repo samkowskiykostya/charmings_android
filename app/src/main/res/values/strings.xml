@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Чарівнятка</string>
+    <string name="notification_channel_name">Трекінг кроків</string>
+    <string name="notification_channel_description">Сповіщення про відстеження кроків</string>
+    <string name="pet_caught_channel_name">Нові чарівнятка</string>
+    <string name="pet_caught_channel_description">Сповіщення про нових чарівняток</string>
+    <string name="stop_tracking">Зупинити</string>
+    <string name="tracking_active">Відстеження активне</string>
+</resources>
