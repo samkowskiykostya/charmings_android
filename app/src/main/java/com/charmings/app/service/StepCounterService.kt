@@ -157,7 +157,7 @@ class StepCounterService : Service(), SensorEventListener {
             .setContentText(getString(R.string.tracking_active))
             .setSmallIcon(R.drawable.ic_notification)
             .setContentIntent(openPendingIntent)
-            .addAction(0, getString(R.string.stop_tracking), stopPendingIntent)
+            .addAction(R.drawable.ic_stop, getString(R.string.stop_tracking), stopPendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
@@ -244,10 +244,28 @@ class StepCounterService : Service(), SensorEventListener {
     }
     
     private fun updateNotification(steps: Int) {
+        // Intent to open the app
+        val openIntent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        }
+        val openPendingIntent = PendingIntent.getActivity(
+            this, 0, openIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
+        // Intent to stop the service
+        val stopIntent = Intent(this, StopServiceReceiver::class.java)
+        val stopPendingIntent = PendingIntent.getBroadcast(
+            this, 0, stopIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         val notification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(getString(R.string.app_name))
             .setContentText("$steps кроків")
             .setSmallIcon(R.drawable.ic_notification)
+            .setContentIntent(openPendingIntent)
+            .addAction(R.drawable.ic_stop, getString(R.string.stop_tracking), stopPendingIntent)
             .setOngoing(true)
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()

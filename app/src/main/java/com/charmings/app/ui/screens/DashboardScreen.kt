@@ -28,7 +28,8 @@ import com.charmings.app.ui.components.CircularProgressIndicator as StepProgress
 @Composable
 fun DashboardScreen(
     state: DashboardState,
-    onNewCatchClick: (Int) -> Unit
+    onNewCatchClick: (Int) -> Unit,
+    onStartTracking: () -> Unit = {}
 ) {
     val context = LocalContext.current
     
@@ -37,6 +38,27 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(LightPrimary)
     ) {
+        // Start tracking button in top right corner when service is not running
+        if (!state.isServiceRunning) {
+            Button(
+                onClick = onStartTracking,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                ),
+                shape = RoundedCornerShape(20.dp)
+            ) {
+                Text(
+                    text = "Почати трекінг",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()

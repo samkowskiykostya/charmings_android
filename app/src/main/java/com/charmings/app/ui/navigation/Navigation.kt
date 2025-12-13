@@ -38,7 +38,8 @@ val bottomNavItems = listOf(Screen.Dashboard, Screen.Caught, Screen.Field)
 fun MainNavigation(
     viewModel: MainViewModel,
     initialPetId: Int? = null,
-    initialCelebrate: Boolean = false
+    initialCelebrate: Boolean = false,
+    onStartTracking: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -131,7 +132,8 @@ fun MainNavigation(
                     onNewCatchClick = { petId ->
                         viewModel.removeFromNewCatches(petId)
                         navController.navigate(Screen.Profile.createRoute(petId, true))
-                    }
+                    },
+                    onStartTracking = onStartTracking
                 )
             }
             

@@ -50,7 +50,8 @@ class MainActivity : ComponentActivity() {
                     MainNavigation(
                         viewModel = viewModel,
                         initialPetId = initialPetId,
-                        initialCelebrate = initialCelebrate
+                        initialCelebrate = initialCelebrate,
+                        onStartTracking = { startStepCounterService() }
                     )
                 }
             }
