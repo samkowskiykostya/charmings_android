@@ -28,36 +28,121 @@ export PATH="$ANDROID_HOME/platform-tools:$ANDROID_HOME/tools:$ANDROID_HOME/emul
 # Navigate to project directory
 cd "$(dirname "$0")"
 
-# Check for connected devices/emulators
-echo "Checking for connected devices..."
-DEVICES=$(adb devices | grep -v "List" | grep -v "^$" | wc -l)
+# Config file for device mode
+CONFIG_FILE="$(dirname "$0")/.deploy_config"
+MODE=""
+DEVICE=""
+ADB_TARGET=""
 
-if [ "$DEVICES" -eq 0 ]; then
-    echo "No devices connected. Starting emulator..."
+# Load config if exists
+if [ -f "$CONFIG_FILE" ]; then
+    source "$CONFIG_FILE"
+    echo "Loaded config: mode=$MODE, device=$DEVICE"
+fi
+
+# Handle based on mode
+if [ "$MODE" = "wifi" ]; then
+    echo "Using WiFi mode..."
+    if [ -n "$DEVICE" ]; then
+        # Check if device is connected
+        if ! adb devices | grep -q "$DEVICE.*device$"; then
+            echo "WiFi device $DEVICE not connected. Attempting to reconnect..."
+            adb connect "$DEVICE" 2>/dev/null || true
+            sleep 2
+        fi
+        
+        if adb devices | grep -q "$DEVICE.*device$"; then
+            ADB_TARGET="-s $DEVICE"
+            echo "Connected to WiFi device: $DEVICE"
+        else
+            echo "Error: Could not connect to WiFi device $DEVICE"
+            echo "Run ./deploy.sh --setup-wifi to reconfigure."
+            exit 1
+        fi
+    else
+        # Try to find any WiFi device
+        WIFI_DEVICE=$(adb devices | grep ":5555" | grep "device$" | awk '{print $1}' | head -1)
+        if [ -n "$WIFI_DEVICE" ]; then
+            ADB_TARGET="-s $WIFI_DEVICE"
+            echo "Using WiFi device: $WIFI_DEVICE"
+        else
+            echo "Error: No WiFi device found."
+            echo "Run ./deploy.sh --setup-wifi to configure."
+            exit 1
+        fi
+    fi
+elif [ "$MODE" = "emulator" ]; then
+    echo "Using emulator mode..."
+    # Check for running emulator
+    EMULATOR_DEVICE=$(adb devices | grep -E "emulator-|localhost:" | grep "device$" | awk '{print $1}' | head -1)
     
-    # List available emulators
-    EMULATORS=$(emulator -list-avds 2>/dev/null | head -1)
-    
-    if [ -z "$EMULATORS" ]; then
-        echo "Error: No emulators found. Please create an AVD first."
-        echo "You can create one using Android Studio or:"
-        echo "  avdmanager create avd -n Pixel_API_34 -k 'system-images;android-34;google_apis;x86_64'"
-        exit 1
+    if [ -z "$EMULATOR_DEVICE" ]; then
+        echo "No emulator running. Starting emulator..."
+        
+        # List available emulators
+        EMULATORS=$(emulator -list-avds 2>/dev/null | head -1)
+        
+        if [ -z "$EMULATORS" ]; then
+            echo "Error: No emulators found. Please create an AVD first."
+            echo "You can create one using Android Studio or:"
+            echo "  avdmanager create avd -n Pixel_API_34 -k 'system-images;android-34;google_apis;x86_64'"
+            exit 1
+        fi
+        
+        echo "Starting emulator: $EMULATORS"
+        emulator -avd "$EMULATORS" -no-snapshot-load &
+        
+        echo "Waiting for emulator to boot..."
+        adb wait-for-device
+        
+        # Wait for boot to complete
+        while [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
+            echo "Waiting for boot to complete..."
+            sleep 2
+        done
+        
+        echo "Emulator is ready!"
+        EMULATOR_DEVICE=$(adb devices | grep -E "emulator-|localhost:" | grep "device$" | awk '{print $1}' | head -1)
     fi
     
-    echo "Starting emulator: $EMULATORS"
-    emulator -avd "$EMULATORS" -no-snapshot-load &
+    if [ -n "$EMULATOR_DEVICE" ]; then
+        ADB_TARGET="-s $EMULATOR_DEVICE"
+        echo "Using emulator: $EMULATOR_DEVICE"
+    fi
+else
+    # No config - use default behavior (any connected device)
+    echo "No deploy config found. Using any connected device..."
+    echo "Tip: Run ./deploy.sh --wifi or ./deploy.sh --emulator to set a mode."
     
-    echo "Waiting for emulator to boot..."
-    adb wait-for-device
+    DEVICES=$(adb devices | grep -v "List" | grep -v "^$" | wc -l)
     
-    # Wait for boot to complete
-    while [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
-        echo "Waiting for boot to complete..."
-        sleep 2
-    done
-    
-    echo "Emulator is ready!"
+    if [ "$DEVICES" -eq 0 ]; then
+        echo "No devices connected. Starting emulator..."
+        
+        # List available emulators
+        EMULATORS=$(emulator -list-avds 2>/dev/null | head -1)
+        
+        if [ -z "$EMULATORS" ]; then
+            echo "Error: No emulators found. Please create an AVD first."
+            echo "You can create one using Android Studio or:"
+            echo "  avdmanager create avd -n Pixel_API_34 -k 'system-images;android-34;google_apis;x86_64'"
+            exit 1
+        fi
+        
+        echo "Starting emulator: $EMULATORS"
+        emulator -avd "$EMULATORS" -no-snapshot-load &
+        
+        echo "Waiting for emulator to boot..."
+        adb wait-for-device
+        
+        # Wait for boot to complete
+        while [ "$(adb shell getprop sys.boot_completed 2>/dev/null)" != "1" ]; do
+            echo "Waiting for boot to complete..."
+            sleep 2
+        done
+        
+        echo "Emulator is ready!"
+    fi
 fi
 
 # Build the app
@@ -69,12 +154,12 @@ echo "Building the app..."
 APK_PATH="app/build/outputs/apk/debug/app-debug.apk"
 echo ""
 echo "Installing APK..."
-adb install -r "$APK_PATH"
+adb $ADB_TARGET install -r "$APK_PATH"
 
 # Launch the app
 echo ""
 echo "Launching app..."
-adb shell am start -n com.charmings.app/.MainActivity
+adb $ADB_TARGET shell am start -n com.charmings.app/.MainActivity
 
 echo ""
 echo "=== App is running ==="

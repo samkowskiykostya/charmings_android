@@ -78,4 +78,7 @@ lint/tmp/
 .DS_Store
 Thumbs.db
 
+# Deploy config (local device preference)
+.deploy_config
+
 *.jar

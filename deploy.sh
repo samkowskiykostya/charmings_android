@@ -82,19 +82,51 @@ setup_wifi_from_usb() {
     echo "To reconnect later, run: ./deploy.sh --connect $DEVICE_IP"
 }
 
+# Config file for storing device mode
+CONFIG_FILE="$(dirname "$0")/.deploy_config"
+
+# Function to save config
+save_config() {
+    local mode="$1"
+    local device="$2"
+    echo "MODE=$mode" > "$CONFIG_FILE"
+    echo "DEVICE=$device" >> "$CONFIG_FILE"
+    echo "Saved config: mode=$mode, device=$device"
+}
+
+# Function to load config
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        source "$CONFIG_FILE"
+    fi
+}
+
 # Parse arguments
 SKIP_BUILD=false
 CONNECT_IP=""
+SET_MODE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --wifi)
+            SET_MODE="wifi"
+            shift
+            ;;
+        --emulator)
+            SET_MODE="emulator"
+            shift
+            ;;
         --connect|-c)
             CONNECT_IP="$2"
             shift 2
             ;;
         --setup-wifi|-w)
             setup_wifi_from_usb
-            shift
+            # Save the WiFi device to config
+            save_config "wifi" "$DEVICE_IP:5555"
+            echo ""
+            echo "Config saved. Run ./run.sh to deploy to this device."
+            exit 0
             ;;
         --skip-build|-s)
             SKIP_BUILD=true
@@ -104,14 +136,17 @@ while [[ $# -gt 0 ]]; do
             echo "Usage: ./deploy.sh [OPTIONS]"
             echo ""
             echo "Options:"
+            echo "  --wifi                Switch to WiFi device mode (uses last connected WiFi device)"
+            echo "  --emulator            Switch to emulator mode"
             echo "  --connect, -c <IP>    Connect to device at specified IP address"
             echo "  --setup-wifi, -w      Setup WiFi debugging from USB connection"
             echo "  --skip-build, -s      Skip building, just install existing APK"
             echo "  --help, -h            Show this help message"
             echo ""
             echo "Examples:"
-            echo "  ./deploy.sh                    # Build and deploy to connected device"
             echo "  ./deploy.sh --setup-wifi       # Setup WiFi debugging (requires USB first)"
+            echo "  ./deploy.sh --wifi             # Switch to WiFi mode for subsequent ./run.sh"
+            echo "  ./deploy.sh --emulator         # Switch to emulator mode for subsequent ./run.sh"
             echo "  ./deploy.sh -c 192.168.1.100   # Connect to device and deploy"
             echo "  ./deploy.sh -s                 # Deploy existing APK without rebuilding"
             exit 0
@@ -123,6 +158,25 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# Handle mode switching
+if [ -n "$SET_MODE" ]; then
+    if [ "$SET_MODE" = "wifi" ]; then
+        # Find WiFi device
+        WIFI_DEVICE=$(adb devices | grep ":5555" | grep "device$" | awk '{print $1}' | head -1)
+        if [ -z "$WIFI_DEVICE" ]; then
+            echo "No WiFi device currently connected."
+            echo "Run ./deploy.sh --setup-wifi first with USB connected."
+            exit 1
+        fi
+        save_config "wifi" "$WIFI_DEVICE"
+        echo "Switched to WiFi mode. Device: $WIFI_DEVICE"
+    elif [ "$SET_MODE" = "emulator" ]; then
+        save_config "emulator" ""
+        echo "Switched to emulator mode."
+    fi
+    exit 0
+fi
 
 # Connect to specified IP if provided
 if [ -n "$CONNECT_IP" ]; then
