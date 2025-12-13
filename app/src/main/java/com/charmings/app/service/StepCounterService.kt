@@ -37,6 +37,8 @@ class StepCounterService : Service(), SensorEventListener {
         const val CHANNEL_ID = "step_counter_channel"
         const val PET_CAUGHT_CHANNEL_ID = "pet_caught_channel"
         const val PET_CAUGHT_NOTIFICATION_ID = 2
+        const val ACTION_SERVICE_STATE_CHANGED = "com.charmings.app.SERVICE_STATE_CHANGED"
+        const val EXTRA_IS_RUNNING = "is_running"
         
         var isRunning = false
             private set
@@ -90,6 +92,7 @@ class StepCounterService : Service(), SensorEventListener {
         registerSensorListeners()
         
         isRunning = true
+        broadcastServiceState(true)
         
         return START_STICKY
     }
@@ -105,6 +108,15 @@ class StepCounterService : Service(), SensorEventListener {
         serviceScope.cancel()
         
         isRunning = false
+        broadcastServiceState(false)
+    }
+    
+    private fun broadcastServiceState(running: Boolean) {
+        val intent = Intent(ACTION_SERVICE_STATE_CHANGED).apply {
+            putExtra(EXTRA_IS_RUNNING, running)
+            setPackage(packageName)
+        }
+        sendBroadcast(intent)
     }
     
     override fun onBind(intent: Intent?): IBinder? = null

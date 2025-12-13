@@ -5,8 +5,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -14,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -32,6 +35,14 @@ fun DashboardScreen(
     onStartTracking: () -> Unit = {}
 ) {
     val context = LocalContext.current
+    val configuration = LocalConfiguration.current
+    val screenHeight = configuration.screenHeightDp.dp
+    
+    // Adaptive sizing based on screen height
+    val isSmallScreen = screenHeight < 700.dp
+    val stepProgressSize = if (isSmallScreen) 200.dp else 260.dp
+    val verticalSpacing = if (isSmallScreen) 12.dp else 24.dp
+    val smallSpacing = if (isSmallScreen) 8.dp else 16.dp
     
     Box(
         modifier = Modifier
@@ -41,18 +52,19 @@ fun DashboardScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(smallSpacing))
             
             // Step counter circle
             StepProgress(
                 steps = state.totalSteps,
-                modifier = Modifier.size(260.dp)
+                modifier = Modifier.size(stepProgressSize)
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(smallSpacing))
             
             // Start tracking button centered below the arc
             if (!state.isServiceRunning) {
@@ -79,7 +91,7 @@ fun DashboardScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(verticalSpacing))
             
             // Encouragement message
             Box(
@@ -87,19 +99,19 @@ fun DashboardScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
                     .background(LightPrimary, RoundedCornerShape(25.dp))
-                    .padding(16.dp),
+                    .padding(if (isSmallScreen) 12.dp else 16.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = state.encouragement,
-                    fontSize = 22.sp,
+                    fontSize = if (isSmallScreen) 18.sp else 22.sp,
                     color = Black,
                     textAlign = TextAlign.Center,
                     fontWeight = FontWeight.Medium
                 )
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(verticalSpacing))
             
             // Date and holiday
             Box(
@@ -109,21 +121,21 @@ fun DashboardScreen(
                         RoundedCornerShape(25.dp)
                     )
                     .border(1.dp, White, RoundedCornerShape(25.dp))
-                    .padding(14.dp),
+                    .padding(if (isSmallScreen) 10.dp else 14.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
                         text = "${state.currentDay}, ${state.currentDate}",
-                        fontSize = 18.sp,
+                        fontSize = if (isSmallScreen) 16.sp else 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Black
                     )
                     state.todayHoliday?.let { holiday ->
-                        Spacer(modifier = Modifier.height(8.dp))
+                        Spacer(modifier = Modifier.height(if (isSmallScreen) 4.dp else 8.dp))
                         Text(
                             text = holiday,
-                            fontSize = 20.sp,
+                            fontSize = if (isSmallScreen) 18.sp else 20.sp,
                             fontWeight = FontWeight.Bold,
                             color = Primary
                         )
@@ -131,7 +143,7 @@ fun DashboardScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(verticalSpacing))
             
             // New catches
             if (state.newCatches.isNotEmpty()) {
@@ -147,6 +159,9 @@ fun DashboardScreen(
                     }
                 }
             }
+            
+            // Bottom padding for scroll
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

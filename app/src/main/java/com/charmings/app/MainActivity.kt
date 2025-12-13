@@ -1,7 +1,10 @@
 package com.charmings.app
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -25,6 +28,13 @@ class MainActivity : ComponentActivity() {
     
     private var initialPetId: Int? = null
     private var initialCelebrate: Boolean = false
+    
+    private val serviceStateReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            val isRunning = intent?.getBooleanExtra(StepCounterService.EXTRA_IS_RUNNING, false) ?: false
+            viewModel.setServiceRunning(isRunning)
+        }
+    }
     
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -70,6 +80,23 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         viewModel.refreshData()
         viewModel.setServiceRunning(StepCounterService.isRunning)
+        
+        // Register receiver for service state changes
+        val filter = IntentFilter(StepCounterService.ACTION_SERVICE_STATE_CHANGED)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            registerReceiver(serviceStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        } else {
+            registerReceiver(serviceStateReceiver, filter)
+        }
+    }
+    
+    override fun onPause() {
+        super.onPause()
+        try {
+            unregisterReceiver(serviceStateReceiver)
+        } catch (e: IllegalArgumentException) {
+            // Receiver not registered
+        }
     }
     
     private fun handleIntent(intent: Intent) {
