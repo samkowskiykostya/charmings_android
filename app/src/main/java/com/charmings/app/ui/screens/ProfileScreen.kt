@@ -13,7 +13,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -21,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import com.charmings.app.data.model.Pet
 import com.charmings.app.ui.theme.*
 import com.airbnb.lottie.compose.*
@@ -70,18 +74,73 @@ fun ProfileScreen(
                 )
             )
             
-            // Pet image
+            // Pet image with "Found" badge above
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(400.dp)
+                    .height(450.dp)
             ) {
+                // Blurred background
+                if (imageResId != 0) {
+                    Image(
+                        painter = painterResource(id = imageResId),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .blur(20.dp),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                
+                // Gradient overlay for depth
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    LightPrimary.copy(alpha = 0.3f),
+                                    LightPrimary.copy(alpha = 0.6f)
+                                )
+                            )
+                        )
+                )
+                
+                // "Found" badge at top center
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = 8.dp)
+                        .zIndex(10f)
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Primary,
+                                    Secondary
+                                )
+                            ),
+                            RoundedCornerShape(20.dp)
+                        )
+                        .padding(horizontal = 24.dp, vertical = 10.dp)
+                ) {
+                    Text(
+                        text = "✨ Знайдено!",
+                        color = White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+                
+                // Main pet image (sharp, centered)
                 if (imageResId != 0) {
                     Image(
                         painter = painterResource(id = imageResId),
                         contentDescription = pet.name,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(400.dp)
+                            .align(Alignment.Center),
+                        contentScale = ContentScale.Fit
                     )
                 } else {
                     Box(
@@ -111,29 +170,16 @@ fun ProfileScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .offset(y = (-30).dp)
-                    .padding(horizontal = 10.dp),
-                shape = RoundedCornerShape(8.dp),
+                    .offset(y = (-40).dp)
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp),
                 colors = CardDefaults.cardColors(containerColor = White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // "Found" badge
-                    Box(
-                        modifier = Modifier
-                            .offset(y = (-30).dp)
-                            .background(Primary, RoundedCornerShape(15.dp))
-                            .padding(horizontal = 20.dp, vertical = 7.dp)
-                    ) {
-                        Text(
-                            text = "Знайдено!",
-                            color = White,
-                            fontSize = 14.sp
-                        )
-                    }
                     
                     // Name
                     Text(

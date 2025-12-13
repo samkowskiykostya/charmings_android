@@ -38,40 +38,46 @@ fun DashboardScreen(
             .fillMaxSize()
             .background(LightPrimary)
     ) {
-        // Start tracking button in top right corner when service is not running
-        if (!state.isServiceRunning) {
-            Button(
-                onClick = onStartTracking,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF4CAF50)
-                ),
-                shape = RoundedCornerShape(20.dp)
-            ) {
-                Text(
-                    text = "Почати трекінг",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-        
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Spacer(modifier = Modifier.height(40.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             
             // Step counter circle
             StepProgress(
                 steps = state.totalSteps,
-                modifier = Modifier.size(280.dp)
+                modifier = Modifier.size(260.dp)
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Start tracking button centered below the arc
+            if (!state.isServiceRunning) {
+                Button(
+                    onClick = onStartTracking,
+                    modifier = Modifier
+                        .height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Primary
+                    ),
+                    shape = RoundedCornerShape(24.dp),
+                    elevation = ButtonDefaults.buttonElevation(
+                        defaultElevation = 8.dp,
+                        pressedElevation = 4.dp
+                    )
+                ) {
+                    Text(
+                        text = "✨ Почати трекінг",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                }
+            }
             
             Spacer(modifier = Modifier.height(24.dp))
             
