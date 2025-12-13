@@ -8,6 +8,15 @@ android {
     namespace = "com.charmings.app"
     compileSdk = 34
 
+    signingConfigs {
+        create("release") {
+            storeFile = file("../charmings-release.keystore")
+            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            keyAlias = "charmings"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+        }
+    }
+
     defaultConfig {
         applicationId = "com.charmings.app"
         minSdk = 30  // Android 11
@@ -27,6 +36,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
