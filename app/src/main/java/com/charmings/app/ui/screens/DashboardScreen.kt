@@ -14,6 +14,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -39,24 +41,37 @@ fun DashboardScreen(
     val screenHeight = configuration.screenHeightDp.dp
     
     // Adaptive sizing based on screen height
-    val isSmallScreen = screenHeight < 700.dp
-    val stepProgressSize = if (isSmallScreen) 200.dp else 260.dp
-    val verticalSpacing = if (isSmallScreen) 12.dp else 24.dp
-    val smallSpacing = if (isSmallScreen) 8.dp else 16.dp
+    val isSmallScreen = screenHeight < 680.dp
+    val isMediumScreen = screenHeight in 680.dp..780.dp
+    
+    val stepProgressSize = when {
+        isSmallScreen -> 180.dp
+        isMediumScreen -> 220.dp
+        else -> 260.dp
+    }
     
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(LightPrimary)
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        LightPrimary,
+                        Color(0xFFF5F0FF),
+                        LightPrimary.copy(alpha = 0.8f)
+                    )
+                )
+            )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceEvenly
         ) {
-            Spacer(modifier = Modifier.height(smallSpacing))
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 16.dp))
             
             // Step counter circle
             StepProgress(
@@ -64,14 +79,14 @@ fun DashboardScreen(
                 modifier = Modifier.size(stepProgressSize)
             )
             
-            Spacer(modifier = Modifier.height(smallSpacing))
-            
             // Start tracking button centered below the arc
             if (!state.isServiceRunning) {
+                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 16.dp))
                 Button(
                     onClick = onStartTracking,
                     modifier = Modifier
-                        .height(48.dp),
+                        .height(48.dp)
+                        .shadow(8.dp, RoundedCornerShape(24.dp)),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Primary
                     ),
@@ -91,51 +106,77 @@ fun DashboardScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(verticalSpacing))
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 12.dp else 20.dp))
             
-            // Encouragement message
-            Box(
+            // Encouragement message card
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .background(LightPrimary, RoundedCornerShape(25.dp))
-                    .padding(if (isSmallScreen) 12.dp else 16.dp),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = state.encouragement,
-                    fontSize = if (isSmallScreen) 18.sp else 22.sp,
-                    color = Black,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Medium
+                    .shadow(6.dp, RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White.copy(alpha = 0.9f)
                 )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.horizontalGradient(
+                                colors = listOf(
+                                    Primary.copy(alpha = 0.05f),
+                                    Secondary.copy(alpha = 0.08f),
+                                    Primary.copy(alpha = 0.05f)
+                                )
+                            )
+                        )
+                        .padding(vertical = if (isSmallScreen) 14.dp else 20.dp, horizontal = 16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = state.encouragement,
+                        fontSize = when {
+                            isSmallScreen -> 17.sp
+                            isMediumScreen -> 19.sp
+                            else -> 22.sp
+                        },
+                        color = DarkGray,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.SemiBold,
+                        lineHeight = if (isSmallScreen) 22.sp else 28.sp
+                    )
+                }
             }
             
-            Spacer(modifier = Modifier.height(verticalSpacing))
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 12.dp else 20.dp))
             
-            // Date and holiday
-            Box(
+            // Date and holiday card
+            Card(
                 modifier = Modifier
-                    .background(
-                        Color.White.copy(alpha = 0.8f),
-                        RoundedCornerShape(25.dp)
-                    )
-                    .border(1.dp, White, RoundedCornerShape(25.dp))
-                    .padding(if (isSmallScreen) 10.dp else 14.dp),
-                contentAlignment = Alignment.Center
+                    .shadow(4.dp, RoundedCornerShape(20.dp)),
+                shape = RoundedCornerShape(20.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                )
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(
+                    modifier = Modifier.padding(
+                        horizontal = 24.dp,
+                        vertical = if (isSmallScreen) 10.dp else 14.dp
+                    ),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
                     Text(
                         text = "${state.currentDay}, ${state.currentDate}",
-                        fontSize = if (isSmallScreen) 16.sp else 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = Black
+                        fontSize = if (isSmallScreen) 15.sp else 17.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray
                     )
                     state.todayHoliday?.let { holiday ->
-                        Spacer(modifier = Modifier.height(if (isSmallScreen) 4.dp else 8.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = holiday,
-                            fontSize = if (isSmallScreen) 18.sp else 20.sp,
+                            fontSize = if (isSmallScreen) 16.sp else 18.sp,
                             fontWeight = FontWeight.Bold,
                             color = Primary
                         )
@@ -143,19 +184,31 @@ fun DashboardScreen(
                 }
             }
             
-            Spacer(modifier = Modifier.height(verticalSpacing))
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 12.dp else 20.dp))
             
-            // New catches
+            // New catches section
             if (state.newCatches.isNotEmpty()) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    state.newCatches.take(3).forEach { petId ->
-                        NewCatchCircle(
-                            petId = petId,
-                            onClick = { onNewCatchClick(petId) }
-                        )
+                    Text(
+                        text = "Нові знахідки",
+                        fontSize = if (isSmallScreen) 14.sp else 16.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Gray,
+                        modifier = Modifier.padding(bottom = 8.dp)
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceEvenly
+                    ) {
+                        state.newCatches.take(3).forEach { petId ->
+                            NewCatchCircle(
+                                petId = petId,
+                                onClick = { onNewCatchClick(petId) },
+                                size = if (isSmallScreen) 70.dp else 80.dp
+                            )
+                        }
                     }
                 }
             }
@@ -169,7 +222,8 @@ fun DashboardScreen(
 @Composable
 fun NewCatchCircle(
     petId: Int,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    size: androidx.compose.ui.unit.Dp = 80.dp
 ) {
     val context = LocalContext.current
     val pet = PetsData.getPetById(petId)
@@ -181,9 +235,16 @@ fun NewCatchCircle(
         
         Box(
             modifier = Modifier
-                .size(80.dp)
+                .size(size)
+                .shadow(6.dp, CircleShape)
                 .clip(CircleShape)
-                .border(5.dp, DarkSecondary, CircleShape)
+                .border(
+                    width = 4.dp,
+                    brush = Brush.linearGradient(
+                        colors = listOf(Primary, Secondary, DarkSecondary)
+                    ),
+                    shape = CircleShape
+                )
                 .clickable { onClick() },
             contentAlignment = Alignment.Center
         ) {
@@ -199,13 +260,17 @@ fun NewCatchCircle(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Primary),
+                        .background(
+                            Brush.radialGradient(
+                                colors = listOf(Primary, Secondary)
+                            )
+                        ),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = pet.name.first().toString(),
                         color = White,
-                        fontSize = 24.sp,
+                        fontSize = (size.value * 0.3f).sp,
                         fontWeight = FontWeight.Bold
                     )
                 }
