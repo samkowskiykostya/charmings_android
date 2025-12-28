@@ -22,8 +22,8 @@ class PetCatcher(
         const val STEP_THRESHOLD_FOR_PET_CHECK = 400
         const val STEP_MIN_THRESHOLD_FOR_WALK = 250
         const val PET_CHECK_INTERVAL_MS = 3 * 60 * 1000L // 3 minutes
-        const val STEPS_TIME_WINDOW = 5 * 60 * 1000L // 5 minutes
-        const val MIN_STEPS_IN_WINDOW = 50
+        const val STEPS_TIME_WINDOW = 10 * 60 * 1000L // 10 minutes
+        const val MIN_STEPS_IN_WINDOW = 20
         
         val CAUGHT_LABELS = listOf(
             "Вітаємо з новим другом!",

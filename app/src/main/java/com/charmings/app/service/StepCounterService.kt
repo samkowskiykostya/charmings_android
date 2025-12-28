@@ -39,6 +39,7 @@ class StepCounterService : Service(), SensorEventListener {
         const val PET_CAUGHT_NOTIFICATION_ID = 2
         const val ACTION_SERVICE_STATE_CHANGED = "com.charmings.app.SERVICE_STATE_CHANGED"
         const val EXTRA_IS_RUNNING = "is_running"
+        private const val STEP_SENSOR_DELAY = SensorManager.SENSOR_DELAY_FASTEST
         
         var isRunning = false
             private set
@@ -179,8 +180,9 @@ class StepCounterService : Service(), SensorEventListener {
         // Prefer step counter sensor (more accurate for total count)
         stepCounterSensor?.let { sensor ->
             sensorManager.registerListener(
-                this, sensor,
-                SensorManager.SENSOR_DELAY_NORMAL
+                this,
+                sensor,
+                STEP_SENSOR_DELAY
             )
             Log.d(TAG, "Registered step counter sensor")
         }
@@ -189,8 +191,9 @@ class StepCounterService : Service(), SensorEventListener {
         if (stepCounterSensor == null) {
             stepDetectorSensor?.let { sensor ->
                 sensorManager.registerListener(
-                    this, sensor,
-                    SensorManager.SENSOR_DELAY_NORMAL
+                    this,
+                    sensor,
+                    STEP_SENSOR_DELAY
                 )
                 Log.d(TAG, "Registered step detector sensor")
             }
