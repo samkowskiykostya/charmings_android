@@ -68,37 +68,6 @@ fun DashboardScreen(
                 )
             )
     ) {
-        // Top right tracking button
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp, end = 12.dp),
-            contentAlignment = Alignment.TopEnd
-        ) {
-            Button(
-                onClick = if (state.isServiceRunning) onStopTracking else onStartTracking,
-                modifier = Modifier
-                    .height(32.dp)
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = if (state.isServiceRunning) Color(0xFFFFB6C1) else Primary
-                ),
-                shape = RoundedCornerShape(16.dp),
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                elevation = ButtonDefaults.buttonElevation(
-                    defaultElevation = 4.dp,
-                    pressedElevation = 2.dp
-                )
-            ) {
-                Text(
-                    text = if (state.isServiceRunning) "Зупинити" else "Почати",
-                    color = if (state.isServiceRunning) Color(0xFF8B0000) else Color.White,
-                    fontSize = 12.sp,
-                    fontWeight = FontWeight.Medium
-                )
-            }
-        }
-        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -232,6 +201,34 @@ fun DashboardScreen(
             
             // Bottom padding for scroll
             Spacer(modifier = Modifier.height(16.dp))
+        }
+
+        // Top right tracking button (drawn above content)
+        Button(
+            onClick = if (state.isServiceRunning) onStopTracking else onStartTracking,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .padding(top = 8.dp, end = 12.dp)
+                .height(32.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = if (state.isServiceRunning) Color(0xFFFFB6C1) else Primary
+            ),
+            shape = RoundedCornerShape(16.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            elevation = ButtonDefaults.buttonElevation(
+                defaultElevation = 0.dp,
+                pressedElevation = 0.dp,
+                focusedElevation = 0.dp,
+                hoveredElevation = 0.dp,
+                disabledElevation = 0.dp
+            )
+        ) {
+            Text(
+                text = if (state.isServiceRunning) "Зупинити" else "Почати",
+                color = if (state.isServiceRunning) Color(0xFF8B0000) else Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Medium
+            )
         }
     }
 }
