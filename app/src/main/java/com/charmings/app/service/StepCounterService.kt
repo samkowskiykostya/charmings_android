@@ -40,6 +40,7 @@ class StepCounterService : Service(), SensorEventListener {
         const val ACTION_SERVICE_STATE_CHANGED = "com.charmings.app.SERVICE_STATE_CHANGED"
         const val EXTRA_IS_RUNNING = "is_running"
         private const val STEP_SENSOR_DELAY = SensorManager.SENSOR_DELAY_NORMAL
+        private const val STEP_MULTIPLIER = 2
         
         var isRunning = false
             private set
@@ -223,13 +224,13 @@ class StepCounterService : Service(), SensorEventListener {
                 if (stepsDifference > 0) {
                     lastStepCount = totalSteps
                     Log.d(TAG, "Steps difference: $stepsDifference, Total: $totalSteps")
-                    handleSteps(stepsDifference)
+                    handleSteps(stepsDifference * STEP_MULTIPLIER)
                 }
             }
             Sensor.TYPE_STEP_DETECTOR -> {
                 // Each event is one step
                 Log.d(TAG, "Step detected")
-                handleSteps(1)
+                handleSteps(1 * STEP_MULTIPLIER)
             }
         }
     }
