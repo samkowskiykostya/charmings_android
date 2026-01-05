@@ -39,7 +39,7 @@ class StepCounterService : Service(), SensorEventListener {
         const val PET_CAUGHT_NOTIFICATION_ID = 2
         const val ACTION_SERVICE_STATE_CHANGED = "com.charmings.app.SERVICE_STATE_CHANGED"
         const val EXTRA_IS_RUNNING = "is_running"
-        private const val STEP_SENSOR_DELAY = SensorManager.SENSOR_DELAY_FASTEST
+        private const val STEP_SENSOR_DELAY = SensorManager.SENSOR_DELAY_NORMAL
         
         var isRunning = false
             private set
