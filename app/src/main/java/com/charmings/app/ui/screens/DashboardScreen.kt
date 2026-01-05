@@ -26,15 +26,20 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.charmings.app.data.PetsData
+import com.charmings.app.data.repository.WalkingHistoryEntry
 import com.charmings.app.ui.theme.*
 import com.charmings.app.ui.viewmodel.DashboardState
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import com.charmings.app.ui.components.CircularProgressIndicator as StepProgress
 
 @Composable
 fun DashboardScreen(
     state: DashboardState,
     onNewCatchClick: (Int) -> Unit,
-    onStartTracking: () -> Unit = {}
+    onStartTracking: () -> Unit = {},
+    onStopTracking: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -63,6 +68,37 @@ fun DashboardScreen(
                 )
             )
     ) {
+        // Top right tracking button
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp, end = 12.dp),
+            contentAlignment = Alignment.TopEnd
+        ) {
+            Button(
+                onClick = if (state.isServiceRunning) onStopTracking else onStartTracking,
+                modifier = Modifier
+                    .height(32.dp)
+                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (state.isServiceRunning) Color(0xFFFFB6C1) else Primary
+                ),
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                elevation = ButtonDefaults.buttonElevation(
+                    defaultElevation = 4.dp,
+                    pressedElevation = 2.dp
+                )
+            ) {
+                Text(
+                    text = if (state.isServiceRunning) "Зупинити" else "Почати",
+                    color = if (state.isServiceRunning) Color(0xFF8B0000) else Color.White,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        }
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -79,32 +115,13 @@ fun DashboardScreen(
                 modifier = Modifier.size(stepProgressSize)
             )
             
-            // Start tracking button centered below the arc
-            if (!state.isServiceRunning) {
-                Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 16.dp))
-                Button(
-                    onClick = onStartTracking,
-                    modifier = Modifier
-                        .height(48.dp)
-                        .shadow(8.dp, RoundedCornerShape(24.dp)),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Primary
-                    ),
-                    shape = RoundedCornerShape(24.dp),
-                    elevation = ButtonDefaults.buttonElevation(
-                        defaultElevation = 8.dp,
-                        pressedElevation = 4.dp
-                    )
-                ) {
-                    Text(
-                        text = "✨ Почати трекінг",
-                        color = Color.White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    )
-                }
-            }
+            Spacer(modifier = Modifier.height(if (isSmallScreen) 8.dp else 16.dp))
+            
+            // Walking history section
+            WalkingHistorySection(
+                history = state.walkingHistory,
+                isSmallScreen = isSmallScreen
+            )
             
             Spacer(modifier = Modifier.height(if (isSmallScreen) 12.dp else 20.dp))
             
@@ -272,6 +289,62 @@ fun NewCatchCircle(
                         color = White,
                         fontSize = (size.value * 0.3f).sp,
                         fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun WalkingHistorySection(
+    history: List<WalkingHistoryEntry>,
+    isSmallScreen: Boolean
+) {
+    if (history.isEmpty()) return
+    
+    val dateFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
+    
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(4.dp, RoundedCornerShape(16.dp)),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.95f)
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(if (isSmallScreen) 12.dp else 16.dp)
+        ) {
+            Text(
+                text = "Історія прогулянок",
+                fontSize = if (isSmallScreen) 14.sp else 16.sp,
+                fontWeight = FontWeight.SemiBold,
+                color = DarkGray,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            
+            history.forEach { entry ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "${entry.steps} кроків",
+                        fontSize = if (isSmallScreen) 13.sp else 15.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = Primary
+                    )
+                    Text(
+                        text = dateFormat.format(Date(entry.startTime)),
+                        fontSize = if (isSmallScreen) 12.sp else 14.sp,
+                        color = Gray
                     )
                 }
             }

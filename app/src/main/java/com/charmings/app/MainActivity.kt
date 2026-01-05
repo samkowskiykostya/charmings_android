@@ -61,7 +61,8 @@ class MainActivity : ComponentActivity() {
                         viewModel = viewModel,
                         initialPetId = initialPetId,
                         initialCelebrate = initialCelebrate,
-                        onStartTracking = { startStepCounterService() }
+                        onStartTracking = { startStepCounterService() },
+                        onStopTracking = { stopStepCounterService() }
                     )
                 }
             }
@@ -146,5 +147,11 @@ class MainActivity : ComponentActivity() {
             }
         }
         viewModel.setServiceRunning(true)
+    }
+    
+    private fun stopStepCounterService() {
+        val serviceIntent = Intent(this, StepCounterService::class.java)
+        stopService(serviceIntent)
+        viewModel.setServiceRunning(false)
     }
 }

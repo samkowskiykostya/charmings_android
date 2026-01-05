@@ -216,6 +216,11 @@ class PetCatcher(
         // Add steps to total
         stepRepository.addSteps(stepsDifference)
         
+        // Set walk start time if not set
+        if (stepRepository.getWalkStartTime() == null) {
+            stepRepository.setWalkStartTime(currentTime)
+        }
+        
         // Add to step history
         val entry = com.charmings.app.data.repository.StepEntry(currentTime, stepsDifference)
         stepRepository.addStepEntry(entry)
@@ -230,13 +235,20 @@ class PetCatcher(
             
             val stepsInWindow = filteredHistory.sumOf { it.steps }
             if (stepsInWindow < MIN_STEPS_IN_WINDOW) {
-                // User is inactive
+                // User is inactive - save walking history before reset
                 val totalSteps = stepRepository.getTotalSteps()
+                val walkStartTime = stepRepository.getWalkStartTime()
+                
+                if (walkStartTime != null && totalSteps >= MIN_STEPS_IN_WINDOW) {
+                    stepRepository.addWalkingHistoryEntry(totalSteps, walkStartTime)
+                }
+                
                 if (totalSteps >= STEP_MIN_THRESHOLD_FOR_WALK) {
                     stepRepository.setEncouragement(INACTIVE_LABELS.random())
                 }
                 stepRepository.resetSteps()
                 stepRepository.clearLastPetCheck()
+                stepRepository.clearWalkStartTime()
             }
         }
         
@@ -251,9 +263,16 @@ class PetCatcher(
                 
                 val caughtPet = checkForCaughtPets()
                 if (caughtPet != null) {
+                    // Save walking history before reset on catch
+                    val walkStartTime = stepRepository.getWalkStartTime()
+                    if (walkStartTime != null && totalSteps >= MIN_STEPS_IN_WINDOW) {
+                        stepRepository.addWalkingHistoryEntry(totalSteps, walkStartTime)
+                    }
+                    
                     // Reset on catch
                     stepRepository.resetSteps()
                     stepRepository.clearLastPetCheck()
+                    stepRepository.clearWalkStartTime()
                     return caughtPet
                 }
             }

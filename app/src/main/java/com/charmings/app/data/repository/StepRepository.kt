@@ -23,6 +23,12 @@ data class StepEntry(
     val steps: Int
 )
 
+@Serializable
+data class WalkingHistoryEntry(
+    val steps: Int,
+    val startTime: Long
+)
+
 class StepRepository(private val context: Context) {
     
     companion object {
@@ -31,6 +37,10 @@ class StepRepository(private val context: Context) {
         private val STEP_HISTORY_KEY = stringPreferencesKey("step_history")
         private val ENCOURAGEMENT_KEY = stringPreferencesKey("encouragement")
         private val ENCOURAGEMENT_TIME_KEY = longPreferencesKey("encouragement_time")
+        private val WALKING_HISTORY_KEY = stringPreferencesKey("walking_history")
+        private val WALK_START_TIME_KEY = longPreferencesKey("walk_start_time")
+        private const val MAX_WALKING_HISTORY_SIZE = 3
+        private const val MIN_STEPS_FOR_HISTORY = 20
     }
     
     private val json = Json { ignoreUnknownKeys = true }
@@ -43,6 +53,21 @@ class StepRepository(private val context: Context) {
     // Encouragement flow
     val encouragementFlow: Flow<String> = context.stepDataStore.data.map { preferences ->
         preferences[ENCOURAGEMENT_KEY] ?: getRandomStartLabel()
+    }
+    
+    // Walking history flow
+    val walkingHistoryFlow: Flow<List<WalkingHistoryEntry>> = context.stepDataStore.data.map { preferences ->
+        val jsonString = preferences[WALKING_HISTORY_KEY] ?: "[]"
+        try {
+            json.decodeFromString<List<WalkingHistoryEntry>>(jsonString)
+        } catch (e: Exception) {
+            emptyList()
+        }
+    }
+    
+    // Walk start time flow
+    val walkStartTimeFlow: Flow<Long?> = context.stepDataStore.data.map { preferences ->
+        preferences[WALK_START_TIME_KEY]
     }
     
     suspend fun getTotalSteps(): Int {
@@ -127,6 +152,45 @@ class StepRepository(private val context: Context) {
         context.stepDataStore.edit { preferences ->
             preferences[ENCOURAGEMENT_KEY] = message
             preferences[ENCOURAGEMENT_TIME_KEY] = System.currentTimeMillis()
+        }
+    }
+    
+    suspend fun getWalkStartTime(): Long? {
+        return context.stepDataStore.data.first()[WALK_START_TIME_KEY]
+    }
+    
+    suspend fun setWalkStartTime(time: Long) {
+        context.stepDataStore.edit { preferences ->
+            preferences[WALK_START_TIME_KEY] = time
+        }
+    }
+    
+    suspend fun clearWalkStartTime() {
+        context.stepDataStore.edit { preferences ->
+            preferences.remove(WALK_START_TIME_KEY)
+        }
+    }
+    
+    suspend fun addWalkingHistoryEntry(steps: Int, startTime: Long) {
+        if (steps < MIN_STEPS_FOR_HISTORY) return
+        
+        val history = getWalkingHistory().toMutableList()
+        history.add(0, WalkingHistoryEntry(steps, startTime))
+        
+        // Keep only last 3 entries
+        val trimmedHistory = history.take(MAX_WALKING_HISTORY_SIZE)
+        
+        context.stepDataStore.edit { preferences ->
+            preferences[WALKING_HISTORY_KEY] = json.encodeToString(trimmedHistory)
+        }
+    }
+    
+    suspend fun getWalkingHistory(): List<WalkingHistoryEntry> {
+        val jsonString = context.stepDataStore.data.first()[WALKING_HISTORY_KEY] ?: "[]"
+        return try {
+            json.decodeFromString<List<WalkingHistoryEntry>>(jsonString)
+        } catch (e: Exception) {
+            emptyList()
         }
     }
     

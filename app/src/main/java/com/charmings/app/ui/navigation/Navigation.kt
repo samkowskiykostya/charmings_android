@@ -39,7 +39,8 @@ fun MainNavigation(
     viewModel: MainViewModel,
     initialPetId: Int? = null,
     initialCelebrate: Boolean = false,
-    onStartTracking: () -> Unit = {}
+    onStartTracking: () -> Unit = {},
+    onStopTracking: () -> Unit = {}
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -133,7 +134,8 @@ fun MainNavigation(
                         viewModel.removeFromNewCatches(petId)
                         navController.navigate(Screen.Profile.createRoute(petId, true))
                     },
-                    onStartTracking = onStartTracking
+                    onStartTracking = onStartTracking,
+                    onStopTracking = onStopTracking
                 )
             }
             

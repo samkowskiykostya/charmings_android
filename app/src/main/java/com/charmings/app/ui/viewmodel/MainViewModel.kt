@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.charmings.app.data.model.Pet
 import com.charmings.app.data.repository.PetRepository
 import com.charmings.app.data.repository.StepRepository
+import com.charmings.app.data.repository.WalkingHistoryEntry
 import com.charmings.app.domain.HolidayCalculator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,7 +25,8 @@ data class DashboardState(
     val currentDay: String = "",
     val currentDate: String = "",
     val todayHoliday: String? = null,
-    val isServiceRunning: Boolean = false
+    val isServiceRunning: Boolean = false,
+    val walkingHistory: List<WalkingHistoryEntry> = emptyList()
 )
 
 data class CaughtPetsState(
@@ -75,6 +77,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             stepRepository.encouragementFlow.collectLatest { message ->
                 _dashboardState.value = _dashboardState.value.copy(encouragement = message)
+            }
+        }
+        viewModelScope.launch {
+            stepRepository.walkingHistoryFlow.collectLatest { history ->
+                _dashboardState.value = _dashboardState.value.copy(walkingHistory = history)
             }
         }
     }
