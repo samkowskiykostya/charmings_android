@@ -4,153 +4,116 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.charmings.app.data.model.Pet
-import com.charmings.app.data.repository.PetRepository
-import com.charmings.app.data.repository.StepRepository
 import com.charmings.app.data.repository.WalkingHistoryEntry
 import com.charmings.app.domain.HolidayCalculator
+import com.charmings.app.domain.Texts
+import com.charmings.app.domain.WalkState
+import com.charmings.app.graph
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.TextStyle
 import java.util.Locale
 
+enum class TrackingStatus { ACTIVE, PAUSED, NO_PERMISSION }
+
 data class DashboardState(
-    val totalSteps: Int = 0,
-    val encouragement: String = "Ходімо на пошуки!",
+    val walk: WalkState = WalkState(),
+    val message: String = Texts.START.first(),
     val newCatches: List<Int> = emptyList(),
-    val currentDay: String = "",
-    val currentDate: String = "",
-    val todayHoliday: String? = null,
-    val isServiceRunning: Boolean = false,
-    val walkingHistory: List<WalkingHistoryEntry> = emptyList()
+    val dateLabel: String = "",
+    val holiday: String? = null,
+    val status: TrackingStatus = TrackingStatus.ACTIVE,
+    val history: List<WalkingHistoryEntry> = emptyList()
 )
 
-data class CaughtPetsState(
-    val pets: List<Pet> = emptyList(),
-    val isLoading: Boolean = true
-)
-
-data class UncaughtPetsState(
-    val pets: List<Pet> = emptyList(),
+data class CollectionState(
+    val caught: List<Pet> = emptyList(),
+    val hiding: List<Pet> = emptyList(),
+    val newIds: Set<Int> = emptySet(),
+    val total: Int = 0,
     val isLoading: Boolean = true
 )
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
-    
-    private val petRepository = PetRepository(application)
-    private val stepRepository = StepRepository(application)
-    
-    private val _dashboardState = MutableStateFlow(DashboardState())
-    val dashboardState: StateFlow<DashboardState> = _dashboardState.asStateFlow()
-    
-    private val _caughtPetsState = MutableStateFlow(CaughtPetsState())
-    val caughtPetsState: StateFlow<CaughtPetsState> = _caughtPetsState.asStateFlow()
-    
-    private val _uncaughtPetsState = MutableStateFlow(UncaughtPetsState())
-    val uncaughtPetsState: StateFlow<UncaughtPetsState> = _uncaughtPetsState.asStateFlow()
-    
-    init {
-        initializeData()
-        observeSteps()
-        observeNewCatches()
-        updateDateTime()
-    }
-    
-    private fun initializeData() {
-        viewModelScope.launch {
-            petRepository.initializeIfNeeded()
-            loadCaughtPets()
-            loadUncaughtPets()
+
+    private val graph = application.graph
+    private val petRepository = graph.petRepository
+
+    private val hasPermission = MutableStateFlow(false)
+    private val trackingEnabled = MutableStateFlow(graph.settings.trackingEnabled)
+    private val today = MutableStateFlow(LocalDate.now())
+    private val startMessage = Texts.START.random()
+
+    private val status = combine(hasPermission, trackingEnabled, graph.trackingActive) { perm, enabled, active ->
+        when {
+            !perm -> TrackingStatus.NO_PERMISSION
+            enabled && active -> TrackingStatus.ACTIVE
+            else -> TrackingStatus.PAUSED
         }
     }
-    
-    private fun observeSteps() {
-        viewModelScope.launch {
-            stepRepository.totalStepsFlow.collectLatest { steps ->
-                _dashboardState.value = _dashboardState.value.copy(totalSteps = steps)
-            }
-        }
-        viewModelScope.launch {
-            stepRepository.encouragementFlow.collectLatest { message ->
-                _dashboardState.value = _dashboardState.value.copy(encouragement = message)
-            }
-        }
-        viewModelScope.launch {
-            stepRepository.walkingHistoryFlow.collectLatest { history ->
-                _dashboardState.value = _dashboardState.value.copy(walkingHistory = history)
-            }
-        }
-    }
-    
-    private fun observeNewCatches() {
-        viewModelScope.launch {
-            petRepository.newCatchesFlow.collectLatest { catches ->
-                _dashboardState.value = _dashboardState.value.copy(newCatches = catches)
-            }
-        }
-    }
-    
-    private fun updateDateTime() {
-        val now = LocalDate.now()
-        val dayName = translateDayToUkrainian(now.dayOfWeek.getDisplayName(TextStyle.FULL, Locale.ENGLISH))
-        val dateStr = now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-        val holiday = HolidayCalculator.getTodayHoliday()
-        
-        _dashboardState.value = _dashboardState.value.copy(
-            currentDay = dayName,
-            currentDate = dateStr,
-            todayHoliday = holiday
+
+    val dashboardState: StateFlow<DashboardState> = combine(
+        graph.tracker.state,
+        graph.walkRepository.encouragementFlow,
+        combine(petRepository.newCatchesFlow, graph.walkRepository.historyFlow, ::Pair),
+        status,
+        today
+    ) { walk, message, (newCatches, history), status, date ->
+        DashboardState(
+            walk = walk,
+            message = when (status) {
+                TrackingStatus.NO_PERMISSION -> Texts.NO_PERMISSION
+                TrackingStatus.PAUSED -> Texts.PAUSED
+                TrackingStatus.ACTIVE -> message ?: startMessage
+            },
+            newCatches = newCatches.filter { it != 0 }.reversed(),
+            dateLabel = formatDate(date),
+            holiday = HolidayCalculator.todayHolidayName(date),
+            status = status,
+            history = history
         )
-    }
-    
-    fun loadCaughtPets() {
-        viewModelScope.launch {
-            _caughtPetsState.value = _caughtPetsState.value.copy(isLoading = true)
-            val pets = petRepository.getCaughtPets()
-            _caughtPetsState.value = CaughtPetsState(pets = pets, isLoading = false)
-        }
-    }
-    
-    fun loadUncaughtPets() {
-        viewModelScope.launch {
-            _uncaughtPetsState.value = _uncaughtPetsState.value.copy(isLoading = true)
-            val pets = petRepository.getUncaughtPets()
-            _uncaughtPetsState.value = UncaughtPetsState(pets = pets, isLoading = false)
-        }
-    }
-    
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardState())
+
+    val collectionState: StateFlow<CollectionState> = combine(
+        petRepository.caughtPetIdsFlow,
+        petRepository.newCatchesFlow
+    ) { caughtIds, newIds ->
+        val caughtSet = caughtIds.toSet()
+        val all = petRepository.allPets
+        CollectionState(
+            // Newest finds first: it's the order people care about.
+            caught = caughtIds.asReversed().mapNotNull { petRepository.getPetById(it) },
+            hiding = all.filter { it.id !in caughtSet },
+            newIds = newIds.toSet(),
+            total = all.size,
+            isLoading = false
+        )
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), CollectionState())
+
     fun getPetById(id: Int): Pet? = petRepository.getPetById(id)
-    
-    fun removeFromNewCatches(petId: Int) {
-        viewModelScope.launch {
-            petRepository.removeFromNewCatches(petId)
-        }
+
+    fun markSeen(petId: Int) {
+        viewModelScope.launch { petRepository.removeFromNewCatches(petId) }
     }
-    
-    fun setServiceRunning(running: Boolean) {
-        _dashboardState.value = _dashboardState.value.copy(isServiceRunning = running)
+
+    /** Called from onResume: permissions may have changed in system settings, the day may have rolled. */
+    fun refresh(permissionGranted: Boolean) {
+        hasPermission.value = permissionGranted
+        trackingEnabled.value = graph.settings.trackingEnabled
+        today.value = LocalDate.now()
     }
-    
-    fun refreshData() {
-        loadCaughtPets()
-        loadUncaughtPets()
-        updateDateTime()
+
+    fun setTrackingEnabled(enabled: Boolean) {
+        graph.settings.trackingEnabled = enabled
+        trackingEnabled.value = enabled
     }
-    
-    private fun translateDayToUkrainian(day: String): String {
-        return when (day.lowercase()) {
-            "sunday" -> "Неділя"
-            "monday" -> "Понеділок"
-            "tuesday" -> "Вівторок"
-            "wednesday" -> "Середа"
-            "thursday" -> "Четвер"
-            "friday" -> "П'ятниця"
-            "saturday" -> "Субота"
-            else -> day
-        }
-    }
+
+    private fun formatDate(date: LocalDate): String =
+        date.format(DateTimeFormatter.ofPattern("EEEE, d MMMM", Locale("uk")))
+            .replaceFirstChar { it.titlecase(Locale("uk")) }
 }

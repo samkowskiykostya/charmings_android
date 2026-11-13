@@ -46,11 +46,17 @@ _charmings_android/
    export ANDROID_HOME=$HOME/Android/Sdk          # Linux
    ```
 
-2. **Copy assets** from the Expo project:
-   ```bash
-   chmod +x copy_assets.sh
-   ./copy_assets.sh
+2. **Weather API key** — put it in `local.properties` (git-ignored), or set `WEATHER_API_KEY`:
+   ```properties
+   weather.apiKey=YOUR_WEATHERAPI_COM_KEY
    ```
+   Without a key the app works; weather-dependent pets just can't appear.
+
+> **Images are not bundled.** The APK ships only 24 px thumbnails (`res/drawable-nodpi/thumb_XX.webp`)
+> plus Ось's full image. Full pictures (`pet-images/pet_XX.webp`, 768 px) are downloaded on demand
+> from `petImageBaseUrl` (default: jsDelivr serving this public GitHub repo) and cached on disk by Coil.
+> **Push `pet-images/` before releasing**, or override the URL with `-PpetImageBaseUrl=https://…/`.
+> `copy_assets.sh` is obsolete.
 
 3. **Build the app**:
    ```bash
@@ -70,12 +76,15 @@ The app requires the following permissions:
 - `ACTIVITY_RECOGNITION` - For step counting
 - `FOREGROUND_SERVICE` - For background tracking
 - `POST_NOTIFICATIONS` - For notifications (Android 13+)
-- `INTERNET` - For weather API
+- `INTERNET` - For weather API and pet images
+- `ACCESS_COARSE_LOCATION` - Optional; city-level weather from the last known location (falls back to Kyiv)
 
 ## How Pet Catching Works
 
-1. The app tracks steps in the background
-2. After 400 steps, it checks if any pet's requirements are met
+1. Steps are grouped per minute. A minute with ≥ 60 steps is a *walking minute*; a walk starts at the
+   first one and survives pauses of up to 5 minutes (traffic lights). Pottering at home never counts.
+   Logic: `domain/WalkEngine.kt` (pure, unit-tested).
+2. Once a walk has ≥ 400 steps since the last catch, pets are checked every 3 minutes
 3. Requirements can include:
    - Minimum steps walked
    - Specific day of week
@@ -84,7 +93,7 @@ The app requires the following permissions:
    - Weather conditions
    - Temperature range
    - Holidays
-4. If requirements are met, there's a probability roll
+4. If requirements are met, there's a probability roll — **once per pet per walk**
 5. Caught pets are saved and displayed in the "Знайдені" tab
 
 ## Architecture
@@ -95,7 +104,7 @@ The app requires the following permissions:
 - **Persistence**: DataStore Preferences
 - **Background Work**: Foreground Service with step sensor
 - **Network**: OkHttp for weather API
-- **Animations**: Lottie Compose
+- **Animations**: Compose-only (breathing, squash, confetti, weather particles); respects "Remove animations"
 
 ## Building Release APK
 
@@ -104,6 +113,8 @@ The app requires the following permissions:
 ```
 
 The release APK will be at `app/build/outputs/apk/release/app-release-unsigned.apk`
+
+Run the unit tests with `./gradlew testDebugUnitTest`.
 
 ## Debugging
 

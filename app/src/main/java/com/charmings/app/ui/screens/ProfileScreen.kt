@@ -1,256 +1,189 @@
 package com.charmings.app.ui.screens
 
-import androidx.compose.foundation.Image
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.blur
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import com.charmings.app.data.model.Pet
-import com.charmings.app.ui.theme.*
-import com.airbnb.lottie.compose.*
+import com.charmings.app.ui.components.Ambient
+import com.charmings.app.ui.components.AmbientParticles
+import com.charmings.app.ui.components.ConfettiBurst
+import com.charmings.app.ui.components.PetImage
+import com.charmings.app.ui.components.SpeechBubble
+import com.charmings.app.ui.components.breathing
+import com.charmings.app.ui.components.rememberSquashState
+import com.charmings.app.ui.components.squash
+import com.charmings.app.ui.components.sticker
+import com.charmings.app.ui.theme.Blueberry
+import com.charmings.app.ui.theme.Butter
+import com.charmings.app.ui.theme.Lilac
+import com.charmings.app.ui.theme.Plum
+import com.charmings.app.ui.theme.White
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(
-    pet: Pet?,
-    isNew: Boolean = false,
-    onBack: () -> Unit
-) {
+fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
     if (pet == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Text("Чарівнятко не знайдено")
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("Це чарівнятко ще ховається", style = MaterialTheme.typography.titleMedium)
         }
         return
     }
-    
-    val context = LocalContext.current
-    val imageResId = context.resources.getIdentifier(
-        pet.imageResName, "drawable", context.packageName
-    )
-    
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(LightPrimary)
-    ) {
+    val ambient = remember(pet.id) { Ambient.of(pet) }
+    // -1 = the pet hasn't said anything yet; taps cycle through its phrases.
+    var phraseIndex by rememberSaveable(pet.id) { mutableIntStateOf(-1) }
+    val squash = rememberSquashState()
+
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val screenH = LocalConfiguration.current.screenHeightDp.dp
+        val hero = minOf(maxWidth - 72.dp, screenH * 0.42f).coerceIn(180.dp, 420.dp)
+
         Column(
-            modifier = Modifier
+            Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Top bar
-            TopAppBar(
-                title = { Text("Чарівнятко") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = LightPrimary
-                )
-            )
-            
-            // Pet image with "Found" badge above
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(450.dp)
-            ) {
-                // Blurred background
-                if (imageResId != 0) {
-                    Image(
-                        painter = painterResource(id = imageResId),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .blur(20.dp),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-                
-                // Gradient overlay for depth
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(
-                            Brush.verticalGradient(
-                                colors = listOf(
-                                    LightPrimary.copy(alpha = 0.3f),
-                                    LightPrimary.copy(alpha = 0.6f)
-                                )
-                            )
-                        )
-                )
-                
-                // "Found" badge at top center
-                Box(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(top = 8.dp)
-                        .zIndex(10f)
-                        .background(
-                            Brush.horizontalGradient(
-                                colors = listOf(
-                                    Primary,
-                                    Secondary
-                                )
-                            ),
-                            RoundedCornerShape(20.dp)
-                        )
-                        .padding(horizontal = 24.dp, vertical = 10.dp)
+            Box(Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp)) {
+                IconButton(
+                    onClick = onBack,
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = White, contentColor = Plum),
+                    modifier = Modifier.shadow(3.dp, CircleShape, ambientColor = Blueberry, spotColor = Blueberry)
                 ) {
-                    Text(
-                        text = "✨ Знайдено!",
-                        color = White,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Icon(Icons.Rounded.ArrowBack, contentDescription = "Назад")
                 }
-                
-                // Main pet image (sharp, centered)
-                if (imageResId != 0) {
-                    Image(
-                        painter = painterResource(id = imageResId),
-                        contentDescription = pet.name,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(400.dp)
-                            .align(Alignment.Center),
-                        contentScale = ContentScale.Fit
+            }
+
+            if (isNew) {
+                Text(
+                    "Нове знайомство!",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier
+                        .background(Butter, CircleShape)
+                        .padding(horizontal = 16.dp, vertical = 6.dp)
+                )
+                Spacer(Modifier.height(8.dp))
+            }
+
+            // Hero: a coloured "sky" blob with this pet's weather, the pet as a breathing sticker.
+            Box(Modifier.size(hero + 48.dp), contentAlignment = Alignment.Center) {
+                Box(
+                    Modifier
+                        .size(hero + 40.dp)
+                        .background(ambient.sky, CircleShape)
+                )
+                AmbientParticles(ambient, Modifier.size(hero + 40.dp), seed = pet.id)
+                PetImage(
+                    pet.id, pet.name,
+                    Modifier
+                        .size(hero * 0.82f)
+                        .breathing(seed = pet.id)
+                        .squash(squash)
+                        .sticker(rotation = -2f, corner = 32.dp, border = 7.dp, elevation = 10.dp)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClickLabel = "Поговорити"
+                        ) {
+                            squash.play()
+                            if (pet.phrases.isNotEmpty()) phraseIndex = (phraseIndex + 1) % pet.phrases.size
+                        }
+                )
+                if (isNew) ConfettiBurst(key = pet.id, modifier = Modifier.matchParentSize())
+            }
+
+            Spacer(Modifier.height(6.dp))
+            AnimatedContent(
+                targetState = phraseIndex,
+                transitionSpec = { (scaleIn(spring(dampingRatio = 0.55f), initialScale = 0.85f) + fadeIn()) togetherWith fadeOut() },
+                label = "phrase"
+            ) { idx ->
+                if (idx < 0) {
+                    Text(
+                        "Торкнись чарівнятка, щоб привітатися",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 18.dp, bottom = 8.dp)
                     )
                 } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Primary),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = pet.name.first().toString(),
-                            color = White,
-                            fontSize = 72.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                }
-                
-                // Firework animation for new catches
-                if (isNew) {
-                    FireworkAnimation(
-                        modifier = Modifier.fillMaxSize()
+                    SpeechBubble(
+                        pet.phrases[idx],
+                        Modifier.padding(horizontal = 32.dp).widthIn(max = 420.dp)
                     )
                 }
             }
-            
-            // Profile content
-            Card(
-                modifier = Modifier
+
+            Column(
+                Modifier
+                    .widthIn(max = 600.dp)
                     .fillMaxWidth()
-                    .offset(y = (-40).dp)
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 8.dp, bottomEnd = 8.dp),
-                colors = CardDefaults.cardColors(containerColor = White),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                    .padding(horizontal = 20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Column(
-                    modifier = Modifier.padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    
-                    // Name
-                    Text(
-                        text = pet.name,
-                        fontSize = 30.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = DarkGray,
-                        textAlign = TextAlign.Center
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // Description
-                    Text(
-                        text = pet.description,
-                        fontSize = 16.sp,
-                        color = Gray,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Requirements
-                    Box(
-                        modifier = Modifier
-                            .background(LightPrimary, RoundedCornerShape(15.dp))
-                            .border(1.dp, Secondary, RoundedCornerShape(15.dp))
-                            .padding(12.dp)
-                    ) {
-                        Text(
-                            text = pet.requirementsDescription,
-                            fontSize = 16.sp,
-                            lineHeight = 24.sp,
-                            color = DarkGray,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Story
-                    Text(
-                        text = pet.story.replace("\n", "\n\n"),
-                        fontSize = 16.sp,
-                        lineHeight = 24.sp,
-                        color = Black,
-                        textAlign = TextAlign.Start,
-                        modifier = Modifier.padding(horizontal = 8.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                }
+                Spacer(Modifier.height(18.dp))
+                Text(pet.name, style = MaterialTheme.typography.headlineLarge, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    pet.description,
+                    style = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                    textAlign = TextAlign.Center
+                )
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    pet.requirementsDescription,
+                    style = MaterialTheme.typography.titleSmall,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .background(Lilac, RoundedCornerShape(16.dp))
+                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                )
+                Spacer(Modifier.height(20.dp))
+                Text(
+                    pet.story,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(White, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 28.dp, bottomEnd = 8.dp))
+                        .padding(horizontal = 22.dp, vertical = 20.dp)
+                )
+                Spacer(Modifier.height(32.dp))
             }
         }
     }
-}
-
-@Composable
-fun FireworkAnimation(modifier: Modifier = Modifier) {
-    val composition by rememberLottieComposition(
-        LottieCompositionSpec.Asset("fireworks.json")
-    )
-    val progress by animateLottieCompositionAsState(
-        composition = composition,
-        iterations = LottieConstants.IterateForever
-    )
-    
-    LottieAnimation(
-        composition = composition,
-        progress = { progress },
-        modifier = modifier
-    )
 }

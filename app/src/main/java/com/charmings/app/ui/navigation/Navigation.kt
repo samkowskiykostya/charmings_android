@@ -1,182 +1,143 @@
 package com.charmings.app.ui.navigation
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.outlined.Help
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.material.icons.rounded.Search
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.charmings.app.ui.screens.*
-import com.charmings.app.ui.theme.*
+import com.charmings.app.ui.screens.CaughtScreen
+import com.charmings.app.ui.screens.DashboardScreen
+import com.charmings.app.ui.screens.FieldScreen
+import com.charmings.app.ui.screens.ProfileScreen
+import com.charmings.app.ui.theme.Blueberry
+import com.charmings.app.ui.theme.Lilac
+import com.charmings.app.ui.theme.Milk
+import com.charmings.app.ui.theme.Plum
+import com.charmings.app.ui.theme.PlumSoft
+import com.charmings.app.ui.theme.White
 import com.charmings.app.ui.viewmodel.MainViewModel
 
-sealed class Screen(val route: String, val title: String, val icon: ImageVector?) {
-    object Dashboard : Screen("dashboard", "Головна", Icons.Default.Home)
-    object Caught : Screen("caught", "Знайдені", Icons.Default.Favorite)
-    object Field : Screen("field", "Невловимі", Icons.Outlined.Help)
-    object Profile : Screen("profile/{petId}?celebrate={celebrate}", "Профіль", null) {
-        fun createRoute(petId: Int, celebrate: Boolean = false) = "profile/$petId?celebrate=$celebrate"
-    }
+private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
+    Walk("dashboard", "Прогулянка", Icons.Rounded.Home),
+    Album("caught", "Знайдені", Icons.Rounded.Favorite),
+    Hiding("field", "Невловимі", Icons.Rounded.Search)
 }
 
-val bottomNavItems = listOf(Screen.Dashboard, Screen.Caught, Screen.Field)
+private const val PROFILE_ROUTE = "profile/{petId}?celebrate={celebrate}"
+private fun profileRoute(petId: Int, celebrate: Boolean) = "profile/$petId?celebrate=$celebrate"
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainNavigation(
     viewModel: MainViewModel,
-    initialPetId: Int? = null,
-    initialCelebrate: Boolean = false,
-    onStartTracking: () -> Unit = {},
-    onStopTracking: () -> Unit = {}
+    pendingPetId: Int?,
+    onPendingPetShown: () -> Unit,
+    onStartTracking: () -> Unit,
+    onStopTracking: () -> Unit
 ) {
     val navController = rememberNavController()
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
-    
-    // Handle initial navigation for notification deep link
-    LaunchedEffect(initialPetId) {
-        if (initialPetId != null) {
-            navController.navigate(Screen.Profile.createRoute(initialPetId, initialCelebrate))
-        }
+    val backStack by navController.currentBackStackEntryAsState()
+    val currentRoute = backStack?.destination?.route
+
+    // Deep link from a "caught" notification — also works when the app is already open.
+    LaunchedEffect(pendingPetId) {
+        val id = pendingPetId ?: return@LaunchedEffect
+        viewModel.markSeen(id)
+        navController.navigate(profileRoute(id, celebrate = true)) { launchSingleTop = true }
+        onPendingPetShown()
     }
-    
-    val showBottomBar = currentRoute in bottomNavItems.map { it.route }
-    
+
     Scaffold(
-        topBar = {
-            if (showBottomBar) {
-                TopAppBar(
-                    title = {
-                        Text(
-                            text = when (currentRoute) {
-                                Screen.Dashboard.route -> "Монітор активності"
-                                Screen.Caught.route -> "Знайдені чарівнятка"
-                                Screen.Field.route -> "Загадкові чарівнятка"
-                                else -> ""
-                            }
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = LightPrimary
-                    )
-                )
-            }
-        },
+        containerColor = Milk,
         bottomBar = {
-            if (showBottomBar) {
-                NavigationBar(
-                    containerColor = White
-                ) {
-                    bottomNavItems.forEach { screen ->
-                        val selected = currentRoute == screen.route
+            if (Tab.values().any { it.route == currentRoute }) {
+                NavigationBar(containerColor = White, tonalElevation = 0.dp) {
+                    Tab.values().forEach { tab ->
                         NavigationBarItem(
-                            icon = {
-                                screen.icon?.let {
-                                    Icon(
-                                        imageVector = it,
-                                        contentDescription = screen.title,
-                                        tint = if (selected) Primary else DarkGray
-                                    )
-                                }
-                            },
-                            label = {
-                                Text(
-                                    text = screen.title,
-                                    fontSize = 12.sp,
-                                    color = if (selected) Primary else DarkGray,
-                                    textAlign = TextAlign.Center
-                                )
-                            },
-                            selected = selected,
+                            selected = currentRoute == tab.route,
                             onClick = {
-                                if (currentRoute != screen.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(Screen.Dashboard.route) {
-                                            saveState = true
-                                        }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
+                                navController.navigate(tab.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                    launchSingleTop = true
+                                    restoreState = true
                                 }
                             },
+                            icon = { Icon(tab.icon, contentDescription = null) },
+                            label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = LightPrimary
+                                selectedIconColor = Blueberry,
+                                selectedTextColor = Plum,
+                                indicatorColor = Lilac,
+                                unselectedIconColor = PlumSoft,
+                                unselectedTextColor = PlumSoft
                             )
                         )
                     }
                 }
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = Screen.Dashboard.route,
-            modifier = Modifier.padding(paddingValues)
+            startDestination = Tab.Walk.route,
+            modifier = Modifier.fillMaxSize().padding(padding)
         ) {
-            composable(Screen.Dashboard.route) {
-                val state by viewModel.dashboardState.collectAsState()
+            composable(Tab.Walk.route) {
+                val state by viewModel.dashboardState.collectAsStateWithLifecycle()
                 DashboardScreen(
                     state = state,
-                    onNewCatchClick = { petId ->
-                        viewModel.removeFromNewCatches(petId)
-                        navController.navigate(Screen.Profile.createRoute(petId, true))
+                    onNewCatchClick = { id ->
+                        viewModel.markSeen(id)
+                        navController.navigate(profileRoute(id, celebrate = true))
                     },
                     onStartTracking = onStartTracking,
                     onStopTracking = onStopTracking
                 )
             }
-            
-            composable(Screen.Caught.route) {
-                val state by viewModel.caughtPetsState.collectAsState()
-                LaunchedEffect(Unit) {
-                    viewModel.loadCaughtPets()
+            composable(Tab.Album.route) {
+                val state by viewModel.collectionState.collectAsStateWithLifecycle()
+                CaughtScreen(state) { id ->
+                    val wasNew = id in state.newIds
+                    if (wasNew) viewModel.markSeen(id)
+                    navController.navigate(profileRoute(id, celebrate = wasNew))
                 }
-                CaughtScreen(
-                    state = state,
-                    onPetClick = { petId ->
-                        navController.navigate(Screen.Profile.createRoute(petId, false))
-                    }
-                )
             }
-            
-            composable(Screen.Field.route) {
-                val state by viewModel.uncaughtPetsState.collectAsState()
-                LaunchedEffect(Unit) {
-                    viewModel.loadUncaughtPets()
-                }
-                FieldScreen(state = state)
+            composable(Tab.Hiding.route) {
+                val state by viewModel.collectionState.collectAsStateWithLifecycle()
+                FieldScreen(state)
             }
-            
             composable(
-                route = Screen.Profile.route,
+                route = PROFILE_ROUTE,
                 arguments = listOf(
                     navArgument("petId") { type = NavType.IntType },
-                    navArgument("celebrate") { 
-                        type = NavType.BoolType
-                        defaultValue = false
-                    }
+                    navArgument("celebrate") { type = NavType.BoolType; defaultValue = false }
                 )
-            ) { backStackEntry ->
-                val petId = backStackEntry.arguments?.getInt("petId") ?: return@composable
-                val celebrate = backStackEntry.arguments?.getBoolean("celebrate") ?: false
-                val pet = viewModel.getPetById(petId)
-                
+            ) { entry ->
+                val petId = entry.arguments?.getInt("petId") ?: return@composable
                 ProfileScreen(
-                    pet = pet,
-                    isNew = celebrate,
+                    pet = viewModel.getPetById(petId),
+                    isNew = entry.arguments?.getBoolean("celebrate") ?: false,
                     onBack = { navController.popBackStack() }
                 )
             }

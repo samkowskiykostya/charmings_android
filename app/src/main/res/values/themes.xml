@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Charmings" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:statusBarColor">@color/light_primary</item>
+        <item name="android:windowBackground">@color/milk</item>
+        <item name="android:statusBarColor">@color/milk</item>
         <item name="android:navigationBarColor">@color/white</item>
         <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowLightNavigationBar">true</item>
     </style>
 </resources>

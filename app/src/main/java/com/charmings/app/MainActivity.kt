@@ -1,157 +1,120 @@
 package com.charmings.app
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.ui.Modifier
-import androidx.core.content.ContextCompat
+import androidx.compose.runtime.mutableStateOf
 import com.charmings.app.service.StepCounterService
 import com.charmings.app.ui.navigation.MainNavigation
 import com.charmings.app.ui.theme.CharmingsTheme
 import com.charmings.app.ui.viewmodel.MainViewModel
 
 class MainActivity : ComponentActivity() {
-    
+
     private val viewModel: MainViewModel by viewModels()
-    
-    private var initialPetId: Int? = null
-    private var initialCelebrate: Boolean = false
-    
-    private val serviceStateReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context?, intent: Intent?) {
-            val isRunning = intent?.getBooleanExtra(StepCounterService.EXTRA_IS_RUNNING, false) ?: false
-            viewModel.setServiceRunning(isRunning)
-        }
-    }
-    
+
+    /** Pet to open from a "caught" notification; consumed by the navigation once shown. */
+    private val pendingPetId = mutableStateOf<Int?>(null)
+    private var askedForActivityPermission = false
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
-    ) { permissions ->
-        val allGranted = permissions.values.all { it }
-        if (allGranted) {
-            startStepCounterService()
+    ) { _ ->
+        // Only activity recognition is required. Notifications and location are nice-to-have:
+        // denying them must not block step tracking.
+        refreshPermission()
+        if (hasActivityPermission() && application.graph.settings.trackingEnabled) {
+            StepCounterService.start(this)
         }
     }
-    
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        // Handle intent extras (from notification)
-        handleIntent(intent)
-        
+        if (savedInstanceState == null) handleIntent(intent)
+
         setContent {
             CharmingsTheme {
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    MainNavigation(
-                        viewModel = viewModel,
-                        initialPetId = initialPetId,
-                        initialCelebrate = initialCelebrate,
-                        onStartTracking = { startStepCounterService() },
-                        onStopTracking = { stopStepCounterService() }
-                    )
-                }
+                MainNavigation(
+                    viewModel = viewModel,
+                    pendingPetId = pendingPetId.value,
+                    onPendingPetShown = { pendingPetId.value = null },
+                    onStartTracking = ::startTracking,
+                    onStopTracking = ::stopTracking
+                )
             }
         }
-        
-        // Request permissions and start service
-        requestPermissionsAndStartService()
+
+        if (savedInstanceState == null) requestPermissionsAndStart()
     }
-    
-    override fun onNewIntent(intent: Intent?) {
+
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent?.let { handleIntent(it) }
+        handleIntent(intent)
     }
-    
+
     override fun onResume() {
         super.onResume()
-        viewModel.refreshData()
-        viewModel.setServiceRunning(StepCounterService.isRunning)
-        
-        // Register receiver for service state changes
-        val filter = IntentFilter(StepCounterService.ACTION_SERVICE_STATE_CHANGED)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            registerReceiver(serviceStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
-        } else {
-            registerReceiver(serviceStateReceiver, filter)
+        refreshPermission()
+    }
+
+    override fun onStart() {
+        super.onStart()
+        StepCounterService.setUiVisible(this, true)
+    }
+
+    override fun onStop() {
+        StepCounterService.setUiVisible(this, false)
+        super.onStop()
+    }
+
+    private fun handleIntent(intent: Intent?) {
+        val id = intent?.getIntExtra(StepCounterService.EXTRA_PET_ID, -1) ?: -1
+        if (id >= 0) pendingPetId.value = id
+    }
+
+    private fun hasActivityPermission() = StepCounterService.hasActivityPermission(this)
+
+    private fun refreshPermission() = viewModel.refresh(hasActivityPermission())
+
+    private fun requestPermissionsAndStart() {
+        val wanted = buildList {
+            add(Manifest.permission.ACTIVITY_RECOGNITION)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) add(Manifest.permission.POST_NOTIFICATIONS)
+            add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }.filter { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
+
+        if (wanted.isNotEmpty()) {
+            askedForActivityPermission = Manifest.permission.ACTIVITY_RECOGNITION in wanted
+            permissionLauncher.launch(wanted.toTypedArray())
+        } else if (application.graph.settings.trackingEnabled) {
+            StepCounterService.start(this)
         }
     }
-    
-    override fun onPause() {
-        super.onPause()
-        try {
-            unregisterReceiver(serviceStateReceiver)
-        } catch (e: IllegalArgumentException) {
-            // Receiver not registered
+
+    private fun startTracking() {
+        viewModel.setTrackingEnabled(true)
+        when {
+            hasActivityPermission() -> StepCounterService.start(this)
+            // After a permanent denial the system dialog no longer appears: send the user to settings.
+            askedForActivityPermission &&
+                !shouldShowRequestPermissionRationale(Manifest.permission.ACTIVITY_RECOGNITION) ->
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", packageName, null))
+                )
+            else -> requestPermissionsAndStart()
         }
     }
-    
-    private fun handleIntent(intent: Intent) {
-        initialPetId = if (intent.hasExtra("petId")) {
-            intent.getIntExtra("petId", -1).takeIf { it >= 0 }
-        } else null
-        initialCelebrate = intent.getBooleanExtra("celebrate", false)
-    }
-    
-    private fun requestPermissionsAndStartService() {
-        val permissionsToRequest = mutableListOf<String>()
-        
-        // Activity recognition permission (Android 10+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.ACTIVITY_RECOGNITION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.ACTIVITY_RECOGNITION)
-            }
-        }
-        
-        // Notification permission (Android 13+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this, Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                permissionsToRequest.add(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-        
-        if (permissionsToRequest.isNotEmpty()) {
-            permissionLauncher.launch(permissionsToRequest.toTypedArray())
-        } else {
-            startStepCounterService()
-        }
-    }
-    
-    private fun startStepCounterService() {
-        if (!StepCounterService.isRunning) {
-            val serviceIntent = Intent(this, StepCounterService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                startForegroundService(serviceIntent)
-            } else {
-                startService(serviceIntent)
-            }
-        }
-        viewModel.setServiceRunning(true)
-    }
-    
-    private fun stopStepCounterService() {
-        val serviceIntent = Intent(this, StepCounterService::class.java)
-        stopService(serviceIntent)
-        viewModel.setServiceRunning(false)
+
+    private fun stopTracking() {
+        viewModel.setTrackingEnabled(false)
+        StepCounterService.stop(this)
     }
 }
