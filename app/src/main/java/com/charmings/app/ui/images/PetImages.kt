@@ -1,11 +1,11 @@
 package com.charmings.app.ui.images
 
-import com.charmings.app.BuildConfig
 import com.charmings.app.R
 
 /**
- * Only tiny (24 px) thumbnails ship in the APK — used for "mystery" pets and as placeholders.
- * Full images live in /pet-images and are fetched + disk-cached by Coil on demand (pet 0 is bundled).
+ * Full images (768 px cut-outs, copied from pet-images/v2) ship in the APK under assets/pets/ and
+ * are loaded by Coil, which downsamples them to the view size. Tiny (24 px) thumbnails are used
+ * for "mystery" pets and as placeholders.
  * Explicit R references (not getIdentifier) keep resource shrinking safe.
  */
 object PetImages {
@@ -84,5 +84,5 @@ object PetImages {
     /** Bundled full image, if any. */
     fun bundled(petId: Int): Int? = if (petId == 0) R.drawable.pet_00_full else null
 
-    fun url(petId: Int): String = BuildConfig.PET_IMAGE_BASE_URL + String.format(java.util.Locale.US, "pet_%02d.webp", petId)
+    fun url(petId: Int): String = "file:///android_asset/pets/" + String.format(java.util.Locale.US, "pet_%02d.webp", petId)
 }
