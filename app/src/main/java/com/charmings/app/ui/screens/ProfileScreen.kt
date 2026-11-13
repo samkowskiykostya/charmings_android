@@ -86,15 +86,8 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Box(Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp)) {
-                IconButton(
-                    onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = Paper, contentColor = Cocoa),
-                    modifier = Modifier.shadow(4.dp, CircleShape, ambientColor = CocoaShadow, spotColor = CocoaShadow)
-                ) {
-                    Icon(Icons.Rounded.ArrowBack, contentDescription = "Назад")
-                }
-            }
+            // Room for the pinned back button overlaid below.
+            Spacer(Modifier.height(56.dp))
 
             if (isNew) {
                 Text(
@@ -198,6 +191,18 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                 )
                 Spacer(Modifier.height(32.dp))
             }
+        }
+
+        // Pinned outside the scrolling column so it stays on screen while scrolling.
+        IconButton(
+            onClick = onBack,
+            colors = IconButtonDefaults.iconButtonColors(containerColor = Paper, contentColor = Cocoa),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .padding(start = 8.dp, top = 8.dp)
+                .shadow(4.dp, CircleShape, ambientColor = CocoaShadow, spotColor = CocoaShadow)
+        ) {
+            Icon(Icons.Rounded.ArrowBack, contentDescription = "Назад")
         }
     }
 }
