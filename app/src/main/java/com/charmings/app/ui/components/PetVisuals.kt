@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
@@ -92,7 +91,6 @@ fun MysteryImage(petId: Int, modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxSize().background(Oat.copy(alpha = 0.40f)))
         Text(
             "?",
-            fontWeight = FontWeight.Black,
             fontSize = (maxWidth.value * 0.42f).sp,
             style = MaterialTheme.typography.displayLarge.copy(color = Paper)
         )

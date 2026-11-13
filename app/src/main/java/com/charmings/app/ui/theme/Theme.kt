@@ -31,28 +31,33 @@ val Paper = Color(0xFFFFFBF5)       // cards (warm white)
 val Stitch = Color(0xFFEBCFAF)      // dashed "felt patch" stitching
 
 @OptIn(ExperimentalTextApi::class)
-private fun nunito(weight: Int) = Font(
-    R.font.nunito,
+private fun variable(res: Int, weight: Int) = Font(
+    res,
     weight = FontWeight(weight),
     variationSettings = FontVariation.Settings(FontVariation.weight(weight))
 )
 
-val Nunito = FontFamily(nunito(400), nunito(600), nunito(700), nunito(800), nunito(900))
+/* Lora: a bookish serif for headings — gives the storybook voice. */
+val Lora = FontFamily(listOf(400, 500, 600, 700).map { variable(R.font.lora, it) })
 
-private val base = TextStyle(fontFamily = Nunito, color = Cocoa)
+/* Golos Text: a calm grotesque drawn for Cyrillic, for body copy and labels. */
+val Golos = FontFamily(listOf(400, 500, 600, 700).map { variable(R.font.golos_text, it) })
+
+private val serif = TextStyle(fontFamily = Lora, color = Cocoa)
+private val sans = TextStyle(fontFamily = Golos, color = Cocoa)
 
 val CharmingsTypography = Typography(
-    displayLarge = base.copy(fontWeight = FontWeight.Black, fontSize = 40.sp, lineHeight = 44.sp),
-    headlineLarge = base.copy(fontWeight = FontWeight.Black, fontSize = 32.sp, lineHeight = 38.sp),
-    headlineMedium = base.copy(fontWeight = FontWeight.Black, fontSize = 26.sp, lineHeight = 32.sp),
-    titleLarge = base.copy(fontWeight = FontWeight.ExtraBold, fontSize = 20.sp, lineHeight = 26.sp),
-    titleMedium = base.copy(fontWeight = FontWeight.ExtraBold, fontSize = 17.sp, lineHeight = 22.sp),
-    titleSmall = base.copy(fontWeight = FontWeight.Bold, fontSize = 15.sp, lineHeight = 20.sp),
-    bodyLarge = base.copy(fontWeight = FontWeight.Normal, fontSize = 17.sp, lineHeight = 26.sp),
-    bodyMedium = base.copy(fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp),
-    bodySmall = base.copy(fontWeight = FontWeight.SemiBold, fontSize = 13.sp, lineHeight = 18.sp, color = CocoaSoft),
-    labelLarge = base.copy(fontWeight = FontWeight.ExtraBold, fontSize = 15.sp, lineHeight = 20.sp),
-    labelMedium = base.copy(fontWeight = FontWeight.Bold, fontSize = 12.sp, lineHeight = 16.sp),
+    displayLarge = serif.copy(fontWeight = FontWeight.SemiBold, fontSize = 40.sp, lineHeight = 46.sp, letterSpacing = (-0.5).sp),
+    headlineLarge = serif.copy(fontWeight = FontWeight.SemiBold, fontSize = 30.sp, lineHeight = 36.sp, letterSpacing = (-0.3).sp),
+    headlineMedium = serif.copy(fontWeight = FontWeight.SemiBold, fontSize = 25.sp, lineHeight = 31.sp, letterSpacing = (-0.2).sp),
+    titleLarge = serif.copy(fontWeight = FontWeight.SemiBold, fontSize = 20.sp, lineHeight = 26.sp),
+    titleMedium = serif.copy(fontWeight = FontWeight.SemiBold, fontSize = 17.sp, lineHeight = 22.sp),
+    titleSmall = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp),
+    bodyLarge = sans.copy(fontWeight = FontWeight.Normal, fontSize = 16.sp, lineHeight = 24.sp),
+    bodyMedium = sans.copy(fontWeight = FontWeight.Normal, fontSize = 15.sp, lineHeight = 22.sp),
+    bodySmall = sans.copy(fontWeight = FontWeight.Normal, fontSize = 13.sp, lineHeight = 18.sp, color = CocoaSoft),
+    labelLarge = sans.copy(fontWeight = FontWeight.SemiBold, fontSize = 15.sp, lineHeight = 20.sp, letterSpacing = 0.1.sp),
+    labelMedium = sans.copy(fontWeight = FontWeight.Medium, fontSize = 12.sp, lineHeight = 16.sp, letterSpacing = 0.2.sp),
 )
 
 private val ColorScheme = lightColorScheme(

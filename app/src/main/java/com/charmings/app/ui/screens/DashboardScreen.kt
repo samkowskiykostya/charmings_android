@@ -294,7 +294,7 @@ private fun NewCatchesRow(ids: List<Int>, onClick: (Int) -> Unit) {
 fun NewBadge(modifier: Modifier = Modifier) {
     Text(
         "нове",
-        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Black),
+        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
         color = Cocoa,
         modifier = modifier
             .background(Honey, CircleShape)
