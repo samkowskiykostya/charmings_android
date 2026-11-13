@@ -33,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
@@ -196,11 +197,23 @@ private fun CompanionRing(state: DashboardState, ring: Dp) {
                 modifier = Modifier
                     .size(ring * 0.42f)
                     .breathing(seed = 0, speed = if (walk.isWalking) 2.4f else 1f, intensity = if (walk.isWalking) 1.4f else 1f)
+                    // The art has empty space under Ось's feet: report a shorter height so the
+                    // number sits close to the shadow and the caption clears the ring.
+                    .layout { measurable, constraints ->
+                        val p = measurable.measure(constraints)
+                        val h = (p.height * 0.78f).toInt()
+                        layout(p.width, h) { p.place(0, 0) }
+                    }
             )
-            Spacer(Modifier.height(ring * 0.03f))
             Text(
                 formatSteps(steps),
                 style = MaterialTheme.typography.displayLarge.copy(fontSize = numberSize, lineHeight = numberSize),
+                // Digits have no ascenders: drop the empty top of the line box so the number hugs the art.
+                modifier = Modifier.layout { measurable, constraints ->
+                    val p = measurable.measure(constraints)
+                    val cut = (p.height * 0.18f).toInt()
+                    layout(p.width, p.height - cut) { p.place(0, -cut) }
+                },
                 maxLines = 1,
                 softWrap = false
             )
