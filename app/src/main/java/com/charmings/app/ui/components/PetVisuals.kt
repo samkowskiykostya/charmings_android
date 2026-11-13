@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -82,7 +81,8 @@ fun MysteryImage(petId: Int, modifier: Modifier = Modifier) {
         val src = BitmapFactory.decodeResource(context.resources, PetImages.thumb(petId))
         BitmapPainter(Bitmap.createScaledBitmap(src, 6, 6, true).asImageBitmap(), filterQuality = FilterQuality.Low)
     }
-    BoxWithConstraints(modifier.clip(CircleShape), contentAlignment = Alignment.Center) {
+    // Thumbnails are transparent cut-outs: back the mist with paper so it reads as one soft disc.
+    BoxWithConstraints(modifier.clip(CircleShape).background(Paper), contentAlignment = Alignment.Center) {
         Image(
             painter = blob,
             contentDescription = null,
@@ -99,23 +99,7 @@ fun MysteryImage(petId: Int, modifier: Modifier = Modifier) {
     }
 }
 
-/** Die-cut sticker look: warm paper border, soft cocoa shadow, slight tilt. */
-fun Modifier.sticker(
-    rotation: Float = 0f,
-    corner: Dp = 22.dp,
-    border: Dp = 5.dp,
-    elevation: Dp = 6.dp
-): Modifier {
-    val shape = RoundedCornerShape(corner)
-    return this
-        .rotate(rotation)
-        .shadow(elevation, shape, ambientColor = CocoaShadow.copy(alpha = 0.5f), spotColor = CocoaShadow.copy(alpha = 0.45f))
-        .background(Paper, shape)
-        .padding(border)
-        .clip(RoundedCornerShape(corner - border))
-}
-
-/** Deterministic little tilt per pet, so the album looks hand-placed but never reshuffles. */
+/** Deterministic little tilt per pet, so the mystery discs look hand-placed but never reshuffle. */
 fun stickerTilt(petId: Int): Float = ((petId * 37) % 7 - 3) * 0.8f
 
 /** Rounded speech bubble with a tail pointing up at [tailCenterFraction] of the width. */

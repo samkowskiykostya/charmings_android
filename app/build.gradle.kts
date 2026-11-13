@@ -15,7 +15,7 @@ fun secret(propKey: String, envKey: String): String =
     localProps.getProperty(propKey) ?: System.getenv(envKey) ?: ""
 
 val petImageBaseUrl: String = (project.findProperty("petImageBaseUrl") as String?)
-    ?: "https://cdn.jsdelivr.net/gh/samkowskiykostya/charmings_android@main/pet-images/"
+    ?: "https://cdn.jsdelivr.net/gh/samkowskiykostya/charmings_android@main/pet-images/v2/"
 
 android {
     namespace = "com.charmings.app"

@@ -39,7 +39,6 @@ import com.charmings.app.data.model.Pet
 import com.charmings.app.domain.pluralUk
 import com.charmings.app.ui.components.MysteryImage
 import com.charmings.app.ui.components.PetImage
-import com.charmings.app.ui.components.sticker
 import com.charmings.app.ui.components.stickerTilt
 import com.charmings.app.ui.components.StripedProgress
 import com.charmings.app.ui.components.cozyCard
@@ -48,7 +47,7 @@ import com.charmings.app.ui.theme.Honey
 import com.charmings.app.ui.theme.Rose
 import com.charmings.app.ui.viewmodel.CollectionState
 
-/* ---------------- Знайдені: the sticker album ---------------- */
+/* ---------------- Знайдені: the album ---------------- */
 
 @Composable
 fun CaughtScreen(state: CollectionState, onPetClick: (Int) -> Unit) {
@@ -88,7 +87,6 @@ private fun AlbumSticker(pet: Pet, isNew: Boolean, onClick: () -> Unit) {
                 Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .sticker(rotation = stickerTilt(pet.id))
             )
             if (isNew) NewBadge(Modifier.align(Alignment.TopEnd).offset(x = (-2).dp, y = (-4).dp))
         }

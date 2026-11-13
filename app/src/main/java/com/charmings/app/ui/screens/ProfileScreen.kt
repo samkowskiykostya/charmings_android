@@ -51,7 +51,6 @@ import com.charmings.app.ui.components.SpeechBubble
 import com.charmings.app.ui.components.breathing
 import com.charmings.app.ui.components.rememberSquashState
 import com.charmings.app.ui.components.squash
-import com.charmings.app.ui.components.sticker
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -100,7 +99,7 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            // Hero: a coloured "sky" blob with this pet's weather, the pet as a breathing sticker.
+            // Hero: a coloured "sky" blob with this pet's weather, the pet breathing right on it.
             Box(Modifier.size(hero + 48.dp), contentAlignment = Alignment.Center) {
                 Box(
                     Modifier
@@ -122,7 +121,6 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                         .size(hero * 0.82f)
                         .breathing(seed = pet.id)
                         .squash(squash)
-                        .sticker(rotation = -2f, corner = 32.dp, border = 7.dp, elevation = 10.dp)
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,

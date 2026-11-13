@@ -50,8 +50,6 @@ import com.charmings.app.ui.components.PetImage
 import com.charmings.app.ui.components.SpeechBubble
 import com.charmings.app.ui.components.StepRing
 import com.charmings.app.ui.components.breathing
-import com.charmings.app.ui.components.sticker
-import com.charmings.app.ui.components.stickerTilt
 import androidx.compose.foundation.Canvas
 import androidx.compose.ui.geometry.Offset
 import com.charmings.app.ui.components.ChunkyButton
@@ -191,13 +189,13 @@ private fun CompanionRing(state: DashboardState, ring: Dp) {
             .semantics { contentDescription = "${formatSteps(steps)} ${stepsWord(steps)} у прогулянці" }
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            // The companion art is a transparent cut-out: no card, Ось stands right on the glow.
             PetImage(
                 petId = 0,
                 contentDescription = null,
                 modifier = Modifier
                     .size(ring * 0.42f)
                     .breathing(seed = 0, speed = if (walk.isWalking) 2.4f else 1f, intensity = if (walk.isWalking) 1.4f else 1f)
-                    .sticker(rotation = -3f, corner = ring * 0.12f, border = 4.dp, elevation = 4.dp)
             )
             Spacer(Modifier.height(ring * 0.03f))
             Text(
@@ -282,7 +280,6 @@ private fun NewCatchesRow(ids: List<Int>, onClick: (Int) -> Unit) {
                         Modifier
                             .size(84.dp)
                             .breathing(seed = id, intensity = 0.6f)
-                            .sticker(rotation = stickerTilt(id), corner = 42.dp, border = 4.dp)
                     )
                     NewBadge(Modifier.align(Alignment.TopEnd))
                 }

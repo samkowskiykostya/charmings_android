@@ -53,10 +53,12 @@ _charmings_android/
    Without a key the app works; weather-dependent pets just can't appear.
 
 > **Images are not bundled.** The APK ships only 24 px thumbnails (`res/drawable-nodpi/thumb_XX.webp`)
-> plus Ось's full image. Full pictures (`pet-images/pet_XX.webp`, 768 px) are downloaded on demand
+> plus Ось's full image. Full pictures (`pet-images/v2/pet_XX.webp`, 768 px, transparent cut-outs) are downloaded on demand
 > from `petImageBaseUrl` (default: jsDelivr serving this public GitHub repo) and cached on disk by Coil.
 > **Push `pet-images/` before releasing**, or override the URL with `-PpetImageBaseUrl=https://…/`.
-> `copy_assets.sh` is obsolete.
+> `copy_assets.sh` is obsolete. `pet-images/pet_XX.webp` (white backgrounds) stay for older installs.
+> If you change pictures, put them in a new folder (`v3/`…) and bump the URL: jsDelivr and Coil both
+> cache by URL, so overwriting files in place would keep showing the old ones.
 
 3. **Build the app**:
    ```bash
