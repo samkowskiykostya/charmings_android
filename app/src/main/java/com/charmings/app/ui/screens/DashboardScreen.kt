@@ -52,13 +52,20 @@ import com.charmings.app.ui.components.StepRing
 import com.charmings.app.ui.components.breathing
 import com.charmings.app.ui.components.sticker
 import com.charmings.app.ui.components.stickerTilt
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Bubblegum
-import com.charmings.app.ui.theme.Butter
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Plum
-import com.charmings.app.ui.theme.PlumSoft
-import com.charmings.app.ui.theme.White
+import androidx.compose.foundation.Canvas
+import androidx.compose.ui.geometry.Offset
+import com.charmings.app.ui.components.ChunkyButton
+import com.charmings.app.ui.components.Paw
+import com.charmings.app.ui.components.cozyCard
+import com.charmings.app.ui.components.drawHeart
+import com.charmings.app.ui.theme.Apricot
+import com.charmings.app.ui.theme.Cocoa
+import com.charmings.app.ui.theme.CocoaSoft
+import com.charmings.app.ui.theme.Honey
+import com.charmings.app.ui.theme.Oat
+import com.charmings.app.ui.theme.Rose
+import com.charmings.app.ui.theme.Stitch
+import java.util.Calendar
 import com.charmings.app.ui.viewmodel.DashboardState
 import com.charmings.app.ui.viewmodel.TrackingStatus
 import java.text.SimpleDateFormat
@@ -135,22 +142,20 @@ private fun Header(status: TrackingStatus, onStart: () -> Unit, onStop: () -> Un
         Modifier.fillMaxWidth().padding(top = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Text(
-            "Чарівнятка",
-            style = MaterialTheme.typography.headlineMedium,
-            modifier = Modifier.weight(1f)
-        )
+        Column(Modifier.weight(1f)) {
+            Text(greeting(), style = MaterialTheme.typography.bodySmall)
+            Text("Чарівнятка", style = MaterialTheme.typography.headlineMedium)
+        }
         val active = status == TrackingStatus.ACTIVE
-        Button(
+        ChunkyButton(
             onClick = if (active) onStop else onStart,
-            modifier = Modifier.heightIn(min = 40.dp),
-            shape = CircleShape,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = if (active) Lilac else Blueberry,
-                contentColor = if (active) Plum else White
-            ),
-            contentPadding = PaddingValues(horizontal = 18.dp, vertical = 8.dp)
+            color = if (active) Oat else Apricot,
+            edge = if (active) Stitch else com.charmings.app.ui.theme.ApricotDeep
         ) {
+            if (status == TrackingStatus.PAUSED) {
+                Paw(Cocoa, Modifier.size(18.dp), angle = -15f)
+                Spacer(Modifier.size(6.dp))
+            }
             Text(
                 when (status) {
                     TrackingStatus.ACTIVE -> "Пауза"
@@ -161,6 +166,13 @@ private fun Header(status: TrackingStatus, onStart: () -> Unit, onStop: () -> Un
             )
         }
     }
+}
+
+private fun greeting(): String = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+    in 5..11 -> "Доброго ранку"
+    in 12..17 -> "Гарного дня"
+    in 18..22 -> "Затишного вечора"
+    else -> "Солодких снів"
 }
 
 /** The hero: Ось lives inside the walk ring and bounces faster while you walk. */
@@ -212,30 +224,40 @@ private fun StatChips(state: DashboardState) {
     val walk = state.walk
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (walk.isWalking) {
-            Chip("${walk.sessionMinutes} хв ходьби", Bubblegum.copy(alpha = 0.22f))
+            Chip("${walk.sessionMinutes} хв ходьби", Rose.copy(alpha = 0.35f), heart = true)
         }
-        Chip("Сьогодні ${formatSteps(walk.daySteps)}", Lilac)
+        Chip("Сьогодні ${formatSteps(walk.daySteps)}", Oat)
     }
 }
 
 @Composable
-private fun Chip(text: String, color: androidx.compose.ui.graphics.Color) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        modifier = Modifier
+private fun Chip(text: String, color: androidx.compose.ui.graphics.Color, heart: Boolean = false) {
+    Row(
+        Modifier
             .background(color, CircleShape)
-            .padding(horizontal = 14.dp, vertical = 7.dp)
-    )
+            .padding(start = 10.dp, end = 14.dp, top = 7.dp, bottom = 7.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (heart) {
+            Canvas(Modifier.size(14.dp)) { drawHeart(Offset(size.width / 2, size.height / 2), size.minDimension * 0.42f, Rose) }
+        } else {
+            Paw(Apricot, Modifier.size(16.dp), angle = 12f)
+        }
+        Spacer(Modifier.size(6.dp))
+        Text(text, style = MaterialTheme.typography.labelLarge)
+    }
 }
 
 @Composable
 private fun SectionTitle(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.titleLarge,
-        modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)
-    )
+    Row(
+        Modifier.fillMaxWidth().padding(bottom = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Canvas(Modifier.size(18.dp)) { drawHeart(Offset(size.width / 2, size.height / 2), size.minDimension * 0.42f, Honey) }
+        Spacer(Modifier.size(8.dp))
+        Text(text, style = MaterialTheme.typography.titleLarge)
+    }
 }
 
 @Composable
@@ -276,9 +298,9 @@ fun NewBadge(modifier: Modifier = Modifier) {
     Text(
         "нове",
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Black),
-        color = Plum,
+        color = Cocoa,
         modifier = modifier
-            .background(Butter, CircleShape)
+            .background(Honey, CircleShape)
             .padding(horizontal = 8.dp, vertical = 2.dp)
     )
 }
@@ -289,31 +311,35 @@ private fun HistoryList(history: List<WalkingHistoryEntry>) {
     Column(
         Modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(20.dp))
-            .padding(horizontal = 18.dp, vertical = 8.dp)
+            .cozyCard()
+            .padding(horizontal = 18.dp, vertical = 10.dp)
     ) {
         history.forEachIndexed { i, entry ->
             Row(
                 Modifier.fillMaxWidth().padding(vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Box(
+                    Modifier.size(34.dp).background(if (i % 2 == 0) Oat else Rose.copy(alpha = 0.3f), CircleShape),
+                    contentAlignment = Alignment.Center
+                ) { Paw(Apricot, Modifier.size(20.dp), angle = if (i % 2 == 0) -14f else 14f) }
+                Spacer(Modifier.size(12.dp))
                 Text(
                     "${formatSteps(entry.steps)} ${stepsWord(entry.steps)}",
                     style = MaterialTheme.typography.titleMedium,
-                    color = Blueberry,
                     modifier = Modifier.weight(1f)
                 )
                 if (entry.durationMinutes > 0) {
                     Text(
                         "${entry.durationMinutes} ${minutesWord(entry.durationMinutes)}",
                         style = MaterialTheme.typography.bodyMedium,
-                        color = PlumSoft
+                        color = CocoaSoft
                     )
                     Spacer(Modifier.size(14.dp))
                 }
-                Text(timeFormat.format(Date(entry.startTime)), style = MaterialTheme.typography.bodyMedium, color = PlumSoft)
+                Text(timeFormat.format(Date(entry.startTime)), style = MaterialTheme.typography.bodyMedium, color = CocoaSoft)
             }
-            if (i < history.lastIndex) Box(Modifier.fillMaxWidth().height(1.dp).background(Lilac))
+            if (i < history.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 46.dp).height(1.5.dp).background(Oat, CircleShape))
         }
     }
 }
@@ -328,7 +354,7 @@ private fun DateLine(date: String, holiday: String?) {
                 holiday,
                 style = MaterialTheme.typography.labelLarge,
                 modifier = Modifier
-                    .background(Bubblegum.copy(alpha = 0.25f), CircleShape)
+                    .background(Rose.copy(alpha = 0.3f), CircleShape)
                     .padding(horizontal = 14.dp, vertical = 6.dp)
             )
         }

@@ -1,23 +1,48 @@
 package com.charmings.app.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Favorite
-import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -27,20 +52,21 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.charmings.app.ui.components.CozyBackground
+import com.charmings.app.ui.components.Paw
+import com.charmings.app.ui.components.cozyCard
 import com.charmings.app.ui.screens.CaughtScreen
 import com.charmings.app.ui.screens.DashboardScreen
 import com.charmings.app.ui.screens.FieldScreen
 import com.charmings.app.ui.screens.ProfileScreen
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Milk
-import com.charmings.app.ui.theme.Plum
-import com.charmings.app.ui.theme.PlumSoft
-import com.charmings.app.ui.theme.White
+import com.charmings.app.ui.theme.Apricot
+import com.charmings.app.ui.theme.Cocoa
+import com.charmings.app.ui.theme.CocoaSoft
 import com.charmings.app.ui.viewmodel.MainViewModel
 
-private enum class Tab(val route: String, val label: String, val icon: ImageVector) {
-    Walk("dashboard", "Прогулянка", Icons.Rounded.Home),
+/** [icon] == null means the hand-drawn paw. */
+private enum class Tab(val route: String, val label: String, val icon: ImageVector?) {
+    Walk("dashboard", "Прогулянка", null),
     Album("caught", "Знайдені", Icons.Rounded.Favorite),
     Hiding("field", "Невловимі", Icons.Rounded.Search)
 }
@@ -68,31 +94,16 @@ fun MainNavigation(
         onPendingPetShown()
     }
 
+    CozyBackground(Modifier.fillMaxSize()) {
     Scaffold(
-        containerColor = Milk,
+        containerColor = Color.Transparent,
         bottomBar = {
             if (Tab.values().any { it.route == currentRoute }) {
-                NavigationBar(containerColor = White, tonalElevation = 0.dp) {
-                    Tab.values().forEach { tab ->
-                        NavigationBarItem(
-                            selected = currentRoute == tab.route,
-                            onClick = {
-                                navController.navigate(tab.route) {
-                                    popUpTo(navController.graph.findStartDestination().id) { saveState = true }
-                                    launchSingleTop = true
-                                    restoreState = true
-                                }
-                            },
-                            icon = { Icon(tab.icon, contentDescription = null) },
-                            label = { Text(tab.label, style = MaterialTheme.typography.labelMedium) },
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = Blueberry,
-                                selectedTextColor = Plum,
-                                indicatorColor = Lilac,
-                                unselectedIconColor = PlumSoft,
-                                unselectedTextColor = PlumSoft
-                            )
-                        )
+                CozyTabBar(currentRoute) { tab ->
+                    navController.navigate(tab.route) {
+                        popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                        launchSingleTop = true
+                        restoreState = true
                     }
                 }
             }
@@ -140,6 +151,79 @@ fun MainNavigation(
                     isNew = entry.arguments?.getBoolean("celebrate") ?: false,
                     onBack = { navController.popBackStack() }
                 )
+            }
+        }
+    }
+    }
+}
+
+/** A floating paper pill; the selected tab grows an apricot bean with its label. */
+@Composable
+private fun CozyTabBar(currentRoute: String?, onSelect: (Tab) -> Unit) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 12.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Row(
+            Modifier
+                .widthIn(max = 460.dp)
+                .fillMaxWidth()
+                .cozyCard(corner = 34.dp, elevation = 10.dp, stitch = false)
+                .padding(8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Tab.values().forEach { tab ->
+                CozyTab(tab, selected = currentRoute == tab.route) { onSelect(tab) }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CozyTab(tab: Tab, selected: Boolean, onClick: () -> Unit) {
+    val pop by animateFloatAsState(
+        if (selected) 1f else 0f,
+        spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow),
+        label = "tabPop"
+    )
+    val tint = if (selected) Cocoa else CocoaSoft
+    Row(
+        Modifier
+            .heightIn(min = 48.dp)
+            .background(Apricot.copy(alpha = pop.coerceIn(0f, 1f)), CircleShape)
+            .selectable(
+                selected = selected,
+                onClick = onClick,
+                role = Role.Tab,
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null
+            )
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        val iconMod = Modifier
+            .size(24.dp)
+            .graphicsLayer {
+                val s = 1f + 0.15f * pop
+                scaleX = s; scaleY = s
+                rotationZ = -8f * pop
+            }
+        // When collapsed, the icon carries the tab's name for TalkBack.
+        val label = if (selected) null else tab.label
+        if (tab.icon == null) Paw(tint, iconMod.semantics { label?.let { contentDescription = it } }, angle = -12f)
+        else Icon(tab.icon, contentDescription = label, tint = tint, modifier = iconMod)
+        AnimatedVisibility(
+            visible = selected,
+            enter = expandHorizontally() + fadeIn(),
+            exit = shrinkHorizontally() + fadeOut()
+        ) {
+            Row {
+                Spacer(Modifier.width(8.dp))
+                Text(tab.label, style = MaterialTheme.typography.labelLarge, color = Cocoa, maxLines = 1)
             }
         }
     }

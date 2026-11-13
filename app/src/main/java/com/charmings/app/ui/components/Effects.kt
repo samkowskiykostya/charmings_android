@@ -21,12 +21,12 @@ import com.charmings.app.data.model.AUTUMN
 import com.charmings.app.data.model.Pet
 import com.charmings.app.data.model.WINTER
 import com.charmings.app.data.model.WeatherKind
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Bubblegum
-import com.charmings.app.ui.theme.Butter
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Mint
-import com.charmings.app.ui.theme.White
+import com.charmings.app.ui.theme.Apricot
+import com.charmings.app.ui.theme.Honey
+import com.charmings.app.ui.theme.Oat
+import com.charmings.app.ui.theme.Paper
+import com.charmings.app.ui.theme.Rose
+import com.charmings.app.ui.theme.Sage
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -39,7 +39,7 @@ private class Bit(
     val spin: Float, val kind: Int
 )
 
-private val ConfettiColors = listOf(Blueberry, Bubblegum, Butter, Mint, Lilac)
+private val ConfettiColors = listOf(Apricot, Rose, Honey, Sage, Color(0xFFE8875F))
 
 /** A single celebratory burst from the upper middle. Plays once per [key]. */
 @Composable
@@ -79,7 +79,8 @@ fun ConfettiBurst(key: Any, modifier: Modifier = Modifier) {
                         b.color.copy(alpha = alpha), Offset(x - s, y - s * 0.4f), Size(s * 2, s * 0.8f),
                         CornerRadius(s * 0.4f)
                     )
-                    else -> drawStar(Offset(x, y), s, b.color.copy(alpha = alpha))
+                    else -> if (b.spin > 0) drawStar(Offset(x, y), s, b.color.copy(alpha = alpha))
+                    else drawHeart(Offset(x, y), s, b.color.copy(alpha = alpha))
                 }
             }
         }
@@ -89,12 +90,12 @@ fun ConfettiBurst(key: Any, modifier: Modifier = Modifier) {
 /* ---------- Ambient weather / season particles behind a pet ---------- */
 
 enum class Ambient(val sky: Color) {
-    RAIN(Color(0xFFDCD8FF)),
-    SNOW(Color(0xFFDDE7FF)),
-    SPARKLE(Color(0xFFFFF0C7)),
-    LEAVES(Color(0xFFFFE3D1)),
-    NIGHT(Color(0xFF4A3A6B)),
-    PLAIN(Lilac);
+    RAIN(Color(0xFFDCE6E4)),
+    SNOW(Color(0xFFEDEBF0)),
+    SPARKLE(Color(0xFFFFE9B8)),
+    LEAVES(Color(0xFFFFD9BE)),
+    NIGHT(Color(0xFF4B3A4F)),
+    PLAIN(Oat);
 
     companion object {
         fun of(pet: Pet): Ambient {
@@ -144,22 +145,22 @@ fun AmbientParticles(ambient: Ambient, modifier: Modifier = Modifier, seed: Int 
                 Ambient.RAIN -> {
                     val y = ((f.y + time * f.speed) % 1f) * size.height
                     val x = f.x * size.width
-                    drawLine(Blueberry.copy(alpha = 0.35f), Offset(x, y), Offset(x - 1.5f * u, y + 5f * u), 0.9f * u, StrokeCap.Round)
+                    drawLine(Color(0xFF7FA3A8).copy(alpha = 0.5f), Offset(x, y), Offset(x - 1.5f * u, y + 5f * u), 0.9f * u, StrokeCap.Round)
                 }
                 Ambient.SNOW -> {
                     val y = ((f.y + time * f.speed) % 1f) * size.height
-                    drawCircle(White, 1.3f * u * f.size, Offset(f.x * size.width + swayX * 4f * u, y))
+                    drawCircle(Paper, 1.3f * u * f.size, Offset(f.x * size.width + swayX * 4f * u, y))
                 }
                 Ambient.LEAVES -> {
                     val y = ((f.y + time * f.speed) % 1f) * size.height
-                    val c = if (f.speed == 1) Color(0xFFF2A65A) else Butter
+                    val c = if (f.speed == 1) Color(0xFFF2A65A) else Honey
                     rotate(swayX * 50f, Offset(f.x * size.width + swayX * 6f * u, y)) {
                         drawOval(c, Offset(f.x * size.width + swayX * 6f * u - 2f * u, y - u), Size(4f * u * f.size, 2f * u * f.size))
                     }
                 }
                 Ambient.SPARKLE, Ambient.NIGHT -> {
                     val twinkle = 0.5f + 0.5f * sin(2 * PI * (time * f.sway + f.phase)).toFloat()
-                    val c = if (ambient == Ambient.NIGHT) Butter else White
+                    val c = if (ambient == Ambient.NIGHT) Honey else Paper
                     drawStar(Offset(f.x * size.width, f.y * size.height), (1.2f + 1.4f * twinkle) * u * f.size, c.copy(alpha = 0.35f + 0.65f * twinkle))
                 }
                 Ambient.PLAIN -> Unit

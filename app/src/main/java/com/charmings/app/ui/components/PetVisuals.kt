@@ -40,10 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.charmings.app.ui.images.PetImages
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Plum
-import com.charmings.app.ui.theme.White
+import com.charmings.app.ui.theme.Cocoa
+import com.charmings.app.ui.theme.Oat
+import com.charmings.app.ui.theme.Paper
+import com.charmings.app.ui.theme.Stitch
 
 /**
  * A caught pet's picture. Full image comes from the APK (pet 0) or the network/disk cache;
@@ -89,18 +89,17 @@ fun MysteryImage(petId: Int, modifier: Modifier = Modifier) {
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        Box(Modifier.fillMaxSize().background(Lilac.copy(alpha = 0.45f)))
+        Box(Modifier.fillMaxSize().background(Oat.copy(alpha = 0.40f)))
         Text(
             "?",
-            color = White,
             fontWeight = FontWeight.Black,
             fontSize = (maxWidth.value * 0.42f).sp,
-            style = MaterialTheme.typography.displayLarge.copy(color = White)
+            style = MaterialTheme.typography.displayLarge.copy(color = Paper)
         )
     }
 }
 
-/** Die-cut sticker look: white border, soft tinted shadow, slight tilt. */
+/** Die-cut sticker look: warm paper border, soft cocoa shadow, slight tilt. */
 fun Modifier.sticker(
     rotation: Float = 0f,
     corner: Dp = 22.dp,
@@ -110,8 +109,8 @@ fun Modifier.sticker(
     val shape = RoundedCornerShape(corner)
     return this
         .rotate(rotation)
-        .shadow(elevation, shape, ambientColor = Blueberry, spotColor = Blueberry.copy(alpha = 0.5f))
-        .background(White, shape)
+        .shadow(elevation, shape, ambientColor = CocoaShadow.copy(alpha = 0.5f), spotColor = CocoaShadow.copy(alpha = 0.45f))
+        .background(Paper, shape)
         .padding(border)
         .clip(RoundedCornerShape(corner - border))
 }
@@ -155,21 +154,21 @@ class BubbleShape(
 fun SpeechBubble(
     text: String,
     modifier: Modifier = Modifier,
-    color: Color = White
+    color: Color = Paper
 ) {
     val shape = BubbleShape()
     Box(
         modifier
-            .shadow(4.dp, shape, ambientColor = Blueberry, spotColor = Blueberry.copy(alpha = 0.35f))
+            .shadow(5.dp, shape, ambientColor = CocoaShadow.copy(alpha = 0.35f), spotColor = CocoaShadow.copy(alpha = 0.3f))
             .background(color, shape)
-            .border(1.5.dp, Lilac, shape)
-            .padding(PaddingValues(start = 20.dp, end = 20.dp, top = 12.dp + 14.dp, bottom = 16.dp)),
+            .border(1.5.dp, Stitch, shape)
+            .padding(PaddingValues(start = 22.dp, end = 22.dp, top = 12.dp + 14.dp, bottom = 16.dp)),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text,
             style = MaterialTheme.typography.titleMedium,
-            color = Plum,
+            color = Cocoa,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
     }

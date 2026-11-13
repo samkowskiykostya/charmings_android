@@ -29,6 +29,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.border
+import com.charmings.app.ui.components.CocoaShadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.charmings.app.data.model.Pet
@@ -37,10 +41,11 @@ import com.charmings.app.ui.components.MysteryImage
 import com.charmings.app.ui.components.PetImage
 import com.charmings.app.ui.components.sticker
 import com.charmings.app.ui.components.stickerTilt
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Bubblegum
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.White
+import com.charmings.app.ui.components.StripedProgress
+import com.charmings.app.ui.components.cozyCard
+import com.charmings.app.ui.theme.Apricot
+import com.charmings.app.ui.theme.Honey
+import com.charmings.app.ui.theme.Rose
 import com.charmings.app.ui.viewmodel.CollectionState
 
 /* ---------------- Знайдені: the sticker album ---------------- */
@@ -122,11 +127,18 @@ private fun HidingRow(pet: Pet) {
     Row(
         Modifier
             .fillMaxWidth()
-            .background(White, RoundedCornerShape(24.dp))
-            .padding(12.dp),
+            .cozyCard()
+            .padding(14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        MysteryImage(pet.id, Modifier.size(76.dp))
+        MysteryImage(
+            pet.id,
+            Modifier
+                .size(76.dp)
+                .rotate(stickerTilt(pet.id))
+                .border(4.dp, com.charmings.app.ui.theme.Paper, CircleShape)
+                .shadow(3.dp, CircleShape, ambientColor = CocoaShadow, spotColor = CocoaShadow)
+        )
         Spacer(Modifier.width(14.dp))
         Column(Modifier.weight(1f)) {
             Text(pet.name, style = MaterialTheme.typography.titleMedium)
@@ -135,10 +147,10 @@ private fun HidingRow(pet: Pet) {
             if (pet.probability < 1.0) {
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    "Рідкісне",
+                    "✦ Рідкісне",
                     style = MaterialTheme.typography.labelMedium,
                     modifier = Modifier
-                        .background(Bubblegum.copy(alpha = 0.25f), CircleShape)
+                        .background(Honey.copy(alpha = 0.45f), CircleShape)
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                 )
             }
@@ -155,22 +167,8 @@ fun ScreenHeader(title: String, subtitle: String, progress: Float? = null) {
         Spacer(Modifier.height(4.dp))
         Text(subtitle, style = MaterialTheme.typography.bodyMedium)
         if (progress != null) {
-            Spacer(Modifier.height(12.dp))
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .height(10.dp)
-                    .clip(CircleShape)
-                    .background(Lilac)
-            ) {
-                Box(
-                    Modifier
-                        .fillMaxWidth(progress.coerceIn(0.02f, 1f))
-                        .height(10.dp)
-                        .clip(CircleShape)
-                        .background(Blueberry)
-                )
-            }
+            Spacer(Modifier.height(14.dp))
+            StripedProgress(progress)
         }
     }
 }
@@ -178,6 +176,6 @@ fun ScreenHeader(title: String, subtitle: String, progress: Float? = null) {
 @Composable
 private fun Loading() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(color = Blueberry)
+        CircularProgressIndicator(color = Apricot, trackColor = Rose.copy(alpha = 0.25f))
     }
 }

@@ -17,11 +17,11 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Bubblegum
-import com.charmings.app.ui.theme.Butter
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Plum
+import com.charmings.app.ui.theme.Apricot
+import com.charmings.app.ui.theme.Cocoa
+import com.charmings.app.ui.theme.Honey
+import com.charmings.app.ui.theme.Rose
+import com.charmings.app.ui.theme.Stitch
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.min
@@ -31,7 +31,7 @@ private const val START_ANGLE = 120f   // opening at the bottom, like a horsesho
 private const val SWEEP = 300f
 
 /**
- * Walk progress ring. The track is a dotted "footprint trail"; the filled arc ends in a butter star.
+ * Walk progress ring. The track is a trail of little paw prints; the filled arc ends in a honey star.
  * [progress] is 0..1 (walk minutes towards a full 30-minute walk).
  */
 @Composable
@@ -47,14 +47,25 @@ fun StepRing(
             val radius = size.minDimension / 2f - stroke
             val center = Offset(size.width / 2f, size.height / 2f)
 
-            // Dotted trail
-            val dots = 34
-            for (i in 0..dots) {
-                val a = Math.toRadians((START_ANGLE + SWEEP * i / dots).toDouble())
-                drawCircle(
-                    Lilac,
-                    radius = stroke * 0.32f,
-                    center = Offset(center.x + radius * cos(a).toFloat(), center.y + radius * sin(a).toFloat())
+            // A warm sunny glow behind the companion
+            drawCircle(
+                Brush.radialGradient(
+                    0f to Honey.copy(alpha = 0.28f), 0.7f to Honey.copy(alpha = 0.10f), 1f to Honey.copy(alpha = 0f),
+                    center = center, radius = radius
+                ),
+                radius, center
+            )
+
+            // Paw-print trail, alternating left/right like real footsteps
+            val paws = 22
+            for (i in 0..paws) {
+                val deg = START_ANGLE + SWEEP * i / paws
+                val a = Math.toRadians(deg.toDouble())
+                val side = if (i % 2 == 0) -1f else 1f
+                val rr = radius + side * stroke * 0.32f
+                drawPaw(
+                    Offset(center.x + rr * cos(a).toFloat(), center.y + rr * sin(a).toFloat()),
+                    stroke * 0.28f, Stitch.copy(red = 0.88f, green = 0.73f, blue = 0.58f), angleDeg = deg + 90f
                 )
             }
 
@@ -63,7 +74,7 @@ fun StepRing(
                 rotate(START_ANGLE, center) {
                     drawArc(
                         brush = Brush.sweepGradient(
-                            0f to Blueberry, SWEEP / 360f to Bubblegum, 1f to Blueberry, center = center
+                            0f to Honey, SWEEP / 720f to Apricot, SWEEP / 360f to Rose, 1f to Honey, center = center
                         ),
                         startAngle = 0f,
                         sweepAngle = SWEEP * animated,
@@ -75,7 +86,7 @@ fun StepRing(
                 }
                 val headA = Math.toRadians((START_ANGLE + SWEEP * animated).toDouble())
                 val head = Offset(center.x + radius * cos(headA).toFloat(), center.y + radius * sin(headA).toFloat())
-                drawStar(head, stroke * 1.25f, Butter, Plum)
+                drawStar(head, stroke * 1.3f, Honey, Cocoa)
             }
         }
         content()

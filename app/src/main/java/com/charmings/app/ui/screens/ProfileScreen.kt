@@ -52,11 +52,16 @@ import com.charmings.app.ui.components.breathing
 import com.charmings.app.ui.components.rememberSquashState
 import com.charmings.app.ui.components.squash
 import com.charmings.app.ui.components.sticker
-import com.charmings.app.ui.theme.Blueberry
-import com.charmings.app.ui.theme.Butter
-import com.charmings.app.ui.theme.Lilac
-import com.charmings.app.ui.theme.Plum
-import com.charmings.app.ui.theme.White
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import com.charmings.app.ui.components.CocoaShadow
+import com.charmings.app.ui.components.cozyCard
+import com.charmings.app.ui.components.drawStitch
+import com.charmings.app.ui.theme.Cocoa
+import com.charmings.app.ui.theme.Honey
+import com.charmings.app.ui.theme.Oat
+import com.charmings.app.ui.theme.Paper
 
 @Composable
 fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
@@ -84,8 +89,8 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
             Box(Modifier.fillMaxWidth().padding(start = 8.dp, top = 8.dp)) {
                 IconButton(
                     onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = White, contentColor = Plum),
-                    modifier = Modifier.shadow(3.dp, CircleShape, ambientColor = Blueberry, spotColor = Blueberry)
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = Paper, contentColor = Cocoa),
+                    modifier = Modifier.shadow(4.dp, CircleShape, ambientColor = CocoaShadow, spotColor = CocoaShadow)
                 ) {
                     Icon(Icons.Rounded.ArrowBack, contentDescription = "Назад")
                 }
@@ -93,10 +98,10 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
 
             if (isNew) {
                 Text(
-                    "Нове знайомство!",
+                    "✦ Нове знайомство! ✦",
                     style = MaterialTheme.typography.labelLarge,
                     modifier = Modifier
-                        .background(Butter, CircleShape)
+                        .background(Honey, CircleShape)
                         .padding(horizontal = 16.dp, vertical = 6.dp)
                 )
                 Spacer(Modifier.height(8.dp))
@@ -108,6 +113,14 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                     Modifier
                         .size(hero + 40.dp)
                         .background(ambient.sky, CircleShape)
+                        .drawBehind {
+                            // a stitched seam around the "sky", like an embroidery hoop
+                            val inset = 9.dp.toPx()
+                            drawCircle(
+                                Paper.copy(alpha = 0.8f), size.minDimension / 2 - inset,
+                                style = Stroke(2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(9.dp.toPx(), 7.dp.toPx())))
+                            )
+                        }
                 )
                 AmbientParticles(ambient, Modifier.size(hero + 40.dp), seed = pet.id)
                 PetImage(
@@ -170,8 +183,9 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                     style = MaterialTheme.typography.titleSmall,
                     textAlign = TextAlign.Center,
                     modifier = Modifier
-                        .background(Lilac, RoundedCornerShape(16.dp))
-                        .padding(horizontal = 16.dp, vertical = 10.dp)
+                        .background(Oat, RoundedCornerShape(18.dp))
+                        .drawBehind { drawStitch(18.dp, inset = 4.dp) }
+                        .padding(horizontal = 18.dp, vertical = 12.dp)
                 )
                 Spacer(Modifier.height(20.dp))
                 Text(
@@ -179,8 +193,8 @@ fun ProfileScreen(pet: Pet?, isNew: Boolean, onBack: () -> Unit) {
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(White, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 28.dp, bottomEnd = 8.dp))
-                        .padding(horizontal = 22.dp, vertical = 20.dp)
+                        .cozyCard(corner = 28.dp)
+                        .padding(horizontal = 24.dp, vertical = 22.dp)
                 )
                 Spacer(Modifier.height(32.dp))
             }
