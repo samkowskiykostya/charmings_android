@@ -19,6 +19,10 @@ fi
 
 cd "$(dirname "$0")"
 
+# --bundle: build a signed AAB for Google Play instead of an APK to sideload.
+BUNDLE=0
+[ "$1" = "--bundle" ] && BUNDLE=1
+
 # Check for keystore
 KEYSTORE="charmings-release.keystore"
 if [ ! -f "$KEYSTORE" ]; then
@@ -30,14 +34,14 @@ if [ ! -f "$KEYSTORE" ]; then
     echo ""
 fi
 
-# Prompt for passwords if not set
-if [ -z "$KEYSTORE_PASSWORD" ]; then
+# Prompt for passwords if not set (or put release.keystore.key=... in git-ignored local.properties)
+if [ -z "$KEYSTORE_PASSWORD" ] && ! grep -q "^release.keystore.key=" local.properties 2>/dev/null; then
     read -sp "Enter keystore password: " KEYSTORE_PASSWORD
     echo ""
     export KEYSTORE_PASSWORD
 fi
 
-if [ -z "$KEY_PASSWORD" ]; then
+if [ -n "$KEYSTORE_PASSWORD" ] && [ -z "$KEY_PASSWORD" ]; then
     read -sp "Enter key password (press Enter if same as keystore): " KEY_PASSWORD
     echo ""
     if [ -z "$KEY_PASSWORD" ]; then
@@ -55,6 +59,14 @@ if [ ! -f "$WRAPPER_JAR" ]; then
 fi
 
 chmod +x ./gradlew
+
+if [ "$BUNDLE" = 1 ]; then
+    ./gradlew bundleRelease
+    AAB=app/build/outputs/bundle/release/app-release.aab
+    [ -f "$AAB" ] || { echo "Error: Build failed."; exit 1; }
+    echo "=== AAB: $AAB ==="
+    exit 0
+fi
 
 echo "Building release APK..."
 ./gradlew assembleRelease

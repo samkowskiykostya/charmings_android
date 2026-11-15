@@ -19,23 +19,23 @@ val petImageBaseUrl: String = (project.findProperty("petImageBaseUrl") as String
 
 android {
     namespace = "com.charmings.app"
-    compileSdk = 34
+    compileSdk = 36
 
     signingConfigs {
         create("release") {
             storeFile = file("../charmings-release.keystore")
-            storePassword = System.getenv("KEYSTORE_PASSWORD") ?: ""
+            storePassword = secret("release.keystore.key", "KEYSTORE_PASSWORD")
             keyAlias = "charmings"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            keyPassword = secret("release.key.password", "KEY_PASSWORD").ifEmpty { secret("release.keystore.key", "KEYSTORE_PASSWORD") }
         }
     }
 
     defaultConfig {
         applicationId = "com.charmings.app"
         minSdk = 30  // Android 11
-        targetSdk = 34
-        versionCode = 2
-        versionName = "1.1"
+        targetSdk = 36
+        versionCode = 4
+        versionName = "1.2"
 
         buildConfigField("String", "WEATHER_API_KEY", "\"${secret("weather.apiKey", "WEATHER_API_KEY")}\"")
         buildConfigField("String", "PET_IMAGE_BASE_URL", "\"$petImageBaseUrl\"")

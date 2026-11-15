@@ -36,10 +36,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.charmings.app.data.PetsData
@@ -72,6 +74,7 @@ import java.util.Date
 import java.util.Locale
 
 private const val FULL_WALK_MINUTES = 30f
+private const val PRIVACY_POLICY_URL = "https://thetix.org/privacy-policy.html"
 
 @Composable
 fun DashboardScreen(
@@ -129,6 +132,8 @@ fun DashboardScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(22.dp))
                 DateLine(state.dateLabel, state.holiday)
+                Spacer(Modifier.height(12.dp))
+                PrivacyPolicyLink()
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -352,6 +357,21 @@ private fun HistoryList(history: List<WalkingHistoryEntry>) {
             if (i < history.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 46.dp).height(1.5.dp).background(Oat, CircleShape))
         }
     }
+}
+
+@Composable
+private fun PrivacyPolicyLink() {
+    val uriHandler = LocalUriHandler.current
+    Text(
+        "Політика конфіденційності",
+        style = MaterialTheme.typography.labelMedium,
+        color = CocoaSoft,
+        textDecoration = TextDecoration.Underline,
+        modifier = Modifier
+            .clip(CircleShape)
+            .clickable { uriHandler.openUri(PRIVACY_POLICY_URL) }
+            .padding(horizontal = 12.dp, vertical = 6.dp)
+    )
 }
 
 @Composable
