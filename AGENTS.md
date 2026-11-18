@@ -16,14 +16,15 @@ Changes that touch only docs or scripts unrelated to the app do not need a deplo
 - Play Console app: Чарівнятка, `com.charmings.app`, console app id `4972097676786640939`. Free game, default language `uk`.
 - Internal testing track testers: email list **ST-T1**.
 - Build the AAB with `./build-release.sh --bundle`. It signs with `charmings-release.keystore` (the Play upload key). The passwords go in git-ignored `local.properties` as `release.keystore.key=` (and `release.key.password=` if the key password is different), or in the `KEYSTORE_PASSWORD`/`KEY_PASSWORD` env vars.
-- Upload through the `google-play-release` skill. Until the app is first published, Play accepts only `--status draft`; roll the draft out in Console (Test and release → Internal testing).
+- Upload through the `google-play-release` skill. Since 16 Nov 2026 the app is in auto-send mode: the helper commits without `changesNotSentForReview`, so changes go straight out (for internal that means directly to testers). Use `--lang uk-UA` for release notes. Until the app is first published, Play accepts only `--status draft`; roll the draft out in Console (Test and release → Internal testing).
 - targetSdk must meet Play's minimum (36 since Aug 2026). Bump `versionCode` for every upload.
 - A new app's first internal release can take about 1.5 hours before testers can install it. Until then they get "Item not found".
 - Before the first review (see the skill's pre-review checklist; Sleep Tracker was rejected for each of these):
   - Done on 14 Nov 2026:
     - The default store listing (uk) is saved and "Ready to send for review", not yet sent. It has the 512 px icon (`launcher_pet` on `#FFE7CF`), a feature graphic, and 3 screenshots, all labelled as AI-generated.
     - The privacy policy names "Чарівнятка".
-    - 1.2 (code 4) adds a "Політика конфіденційності" link on the dashboard and is on internal testing.
+    - 1.2 (code 4) added a "Політика конфіденційності" link on the dashboard.
+    - 1.3 (code 5, 16 Nov 2026) moved that link to a Settings page (gear at the top left of the dashboard) and added an "all found" victory screen on the Невловимі tab. It is on internal testing.
   - App content saved on 14 Nov 2026 (not sent for review):
     - Advertising ID: No. Government apps: No. Financial features: none.
     - Health apps: "Activity and fitness", with an `ACTIVITY_RECOGNITION` description (steps catch pets, step data stays on the device).
@@ -33,5 +34,6 @@ Changes that touch only docs or scripts unrelated to the app do not need a deplo
     - The video was recorded on the emulator on 14 Nov 2026 (`~/Desktop/charmings_fgs_step_counter.mp4`, 24 s): the app with tracking on, Home, the shade with the expanded "Шукаємо чарівняток / Сьогодні: N кроків" notification and its "Зупинити" action, then back in the app.
     - The emulator has no virtual step sensor, so the count stays at 0.
   - "Google Play Games on PC" is opted in by default.
+  - Production countries: when adding them, leave out Brazil, Japan, South Korea and Vietnam. The owner doesn't want their country-specific registration or verification rules for apps that use location, and this app sends approximate location to weatherapi.com. Keep the EU, since Google's geo-blocking rule forbids excluding it. As of 16 Nov 2026, production has no countries yet.
   - Store settings: **Game**, category Casual, contact aiinject@gmail.com and https://thetix.org (saved 14 Nov 2026). Pricing: Free.
   - Dashboard setup and all App content declarations are complete. Publishing overview unlocks once a release exists on a reviewed track (closed, open or production); creating it is the owner's call.

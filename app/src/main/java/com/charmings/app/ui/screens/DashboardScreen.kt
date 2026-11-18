@@ -26,6 +26,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.shadow
+import com.charmings.app.ui.components.CocoaShadow
+import com.charmings.app.ui.theme.Paper
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -74,14 +83,14 @@ import java.util.Date
 import java.util.Locale
 
 private const val FULL_WALK_MINUTES = 30f
-private const val PRIVACY_POLICY_URL = "https://thetix.org/privacy-policy.html"
 
 @Composable
 fun DashboardScreen(
     state: DashboardState,
     onNewCatchClick: (Int) -> Unit,
     onStartTracking: () -> Unit,
-    onStopTracking: () -> Unit
+    onStopTracking: () -> Unit,
+    onOpenSettings: () -> Unit
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
         // Size the hero from the space we actually have (not the raw screen height).
@@ -99,7 +108,7 @@ fun DashboardScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Header(state.status, onStartTracking, onStopTracking)
+            Header(state.status, onStartTracking, onStopTracking, onOpenSettings)
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(8.dp))
             CompanionRing(state, ring)
@@ -132,8 +141,6 @@ fun DashboardScreen(
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Spacer(Modifier.height(22.dp))
                 DateLine(state.dateLabel, state.holiday)
-                Spacer(Modifier.height(12.dp))
-                PrivacyPolicyLink()
                 Spacer(Modifier.height(24.dp))
             }
         }
@@ -141,11 +148,21 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun Header(status: TrackingStatus, onStart: () -> Unit, onStop: () -> Unit) {
+private fun Header(status: TrackingStatus, onStart: () -> Unit, onStop: () -> Unit, onSettings: () -> Unit) {
     Row(
         Modifier.fillMaxWidth().padding(top = 14.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        IconButton(
+            onClick = onSettings,
+            colors = IconButtonDefaults.iconButtonColors(containerColor = Paper, contentColor = Cocoa),
+            modifier = Modifier
+                .offset(x = (-4).dp)
+                .shadow(4.dp, CircleShape, ambientColor = CocoaShadow, spotColor = CocoaShadow)
+        ) {
+            Icon(Icons.Rounded.Settings, contentDescription = "Налаштування")
+        }
+        Spacer(Modifier.size(8.dp))
         Column(Modifier.weight(1f)) {
             Text(greeting(), style = MaterialTheme.typography.bodySmall)
             Text("Чарівнятка", style = MaterialTheme.typography.headlineMedium)
@@ -357,21 +374,6 @@ private fun HistoryList(history: List<WalkingHistoryEntry>) {
             if (i < history.lastIndex) Box(Modifier.fillMaxWidth().padding(start = 46.dp).height(1.5.dp).background(Oat, CircleShape))
         }
     }
-}
-
-@Composable
-private fun PrivacyPolicyLink() {
-    val uriHandler = LocalUriHandler.current
-    Text(
-        "Політика конфіденційності",
-        style = MaterialTheme.typography.labelMedium,
-        color = CocoaSoft,
-        textDecoration = TextDecoration.Underline,
-        modifier = Modifier
-            .clip(CircleShape)
-            .clickable { uriHandler.openUri(PRIVACY_POLICY_URL) }
-            .padding(horizontal = 12.dp, vertical = 6.dp)
-    )
 }
 
 @Composable

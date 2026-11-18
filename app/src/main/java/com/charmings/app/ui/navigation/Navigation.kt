@@ -59,6 +59,7 @@ import com.charmings.app.ui.screens.CaughtScreen
 import com.charmings.app.ui.screens.DashboardScreen
 import com.charmings.app.ui.screens.FieldScreen
 import com.charmings.app.ui.screens.ProfileScreen
+import com.charmings.app.ui.screens.SettingsScreen
 import com.charmings.app.ui.theme.Apricot
 import com.charmings.app.ui.theme.Cocoa
 import com.charmings.app.ui.theme.CocoaSoft
@@ -71,6 +72,7 @@ private enum class Tab(val route: String, val label: String, val icon: ImageVect
     Hiding("field", "Невловимі", Icons.Rounded.Search)
 }
 
+private const val SETTINGS_ROUTE = "settings"
 private const val PROFILE_ROUTE = "profile/{petId}?celebrate={celebrate}"
 private fun profileRoute(petId: Int, celebrate: Boolean) = "profile/$petId?celebrate=$celebrate"
 
@@ -123,7 +125,8 @@ fun MainNavigation(
                         navController.navigate(profileRoute(id, celebrate = true))
                     },
                     onStartTracking = onStartTracking,
-                    onStopTracking = onStopTracking
+                    onStopTracking = onStopTracking,
+                    onOpenSettings = { navController.navigate(SETTINGS_ROUTE) { launchSingleTop = true } }
                 )
             }
             composable(Tab.Album.route) {
@@ -136,7 +139,10 @@ fun MainNavigation(
             }
             composable(Tab.Hiding.route) {
                 val state by viewModel.collectionState.collectAsStateWithLifecycle()
-                FieldScreen(state)
+                FieldScreen(state) { id -> navController.navigate(profileRoute(id, celebrate = false)) }
+            }
+            composable(SETTINGS_ROUTE) {
+                SettingsScreen(onBack = { navController.popBackStack() })
             }
             composable(
                 route = PROFILE_ROUTE,

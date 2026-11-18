@@ -34,8 +34,8 @@ android {
         applicationId = "com.charmings.app"
         minSdk = 30  // Android 11
         targetSdk = 36
-        versionCode = 4
-        versionName = "1.2"
+        versionCode = 5
+        versionName = "1.3"
 
         buildConfigField("String", "WEATHER_API_KEY", "\"${secret("weather.apiKey", "WEATHER_API_KEY")}\"")
         buildConfigField("String", "PET_IMAGE_BASE_URL", "\"$petImageBaseUrl\"")

@@ -32,6 +32,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import com.charmings.app.ui.components.ConfettiBurst
+import com.charmings.app.ui.components.Paw
+import com.charmings.app.ui.components.breathing
 import com.charmings.app.ui.components.CocoaShadow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -98,8 +107,9 @@ private fun AlbumSticker(pet: Pet, isNew: Boolean, onClick: () -> Unit) {
 /* ---------------- Невловимі: who's still hiding ---------------- */
 
 @Composable
-fun FieldScreen(state: CollectionState) {
+fun FieldScreen(state: CollectionState, onPetClick: (Int) -> Unit = {}) {
     if (state.isLoading) return Loading()
+    if (state.hiding.isEmpty() && state.caught.isNotEmpty()) return AllFoundScreen(state, onPetClick)
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 320.dp),
         contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 24.dp),
@@ -110,8 +120,7 @@ fun FieldScreen(state: CollectionState) {
         item(span = { GridItemSpan(maxLineSpan) }) {
             ScreenHeader(
                 title = "Ще ховаються",
-                subtitle = if (state.hiding.isEmpty()) "Ти знайшов усіх! Чарівнятка пишаються тобою."
-                else state.hiding.size.let { n ->
+                subtitle = state.hiding.size.let { n ->
                     "$n ${pluralUk(n, "чарівнятко чекає", "чарівнятка чекають", "чарівняток чекають")} на зустріч. Ось де їх шукати."
                 }
             )
@@ -152,6 +161,110 @@ private fun HidingRow(pet: Pet) {
                         .padding(horizontal = 10.dp, vertical = 3.dp)
                 )
             }
+        }
+    }
+}
+
+/* ---------------- Everyone found: the victory page ---------------- */
+
+@Composable
+private fun AllFoundScreen(state: CollectionState, onPetClick: (Int) -> Unit) {
+    // A few friends gather round to cheer; newest finds lead the parade.
+    val crowd = state.caught.take(5)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val stage = minOf(maxWidth - 40.dp, 420.dp)
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Spacer(Modifier.height(18.dp))
+            Text(
+                "✦ Перемога! ✦",
+                style = MaterialTheme.typography.labelLarge,
+                modifier = Modifier
+                    .background(Honey, CircleShape)
+                    .padding(horizontal = 16.dp, vertical = 6.dp)
+            )
+            Spacer(Modifier.height(14.dp))
+            Text(
+                "Усі чарівнятка знайдені!",
+                style = MaterialTheme.typography.headlineMedium,
+                textAlign = TextAlign.Center
+            )
+            Spacer(Modifier.height(6.dp))
+            Text(
+                "${state.caught.size} з ${state.total} — повний альбом. Ти справжній шукач пухнастиків!",
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.widthIn(max = 420.dp)
+            )
+            Spacer(Modifier.height(18.dp))
+
+            // The crowd: a big hero in the middle, friends peeking in from both sides.
+            Box(Modifier.size(stage, stage * 0.78f)) {
+                val hero = stage * 0.48f
+                val side = stage * 0.3f
+                val spots = listOf(
+                    Triple(Alignment.TopStart, side, -8f),
+                    Triple(Alignment.TopEnd, side, 9f),
+                    Triple(Alignment.BottomStart, side * 0.9f, 6f),
+                    Triple(Alignment.BottomEnd, side * 0.9f, -7f)
+                )
+                crowd.drop(1).forEachIndexed { i, pet ->
+                    val (align, size, tilt) = spots[i]
+                    PetImage(
+                        pet.id, pet.name,
+                        Modifier
+                            .align(align)
+                            .size(size)
+                            .rotate(tilt)
+                            .breathing(seed = pet.id, speed = 1.2f)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onPetClick(pet.id) }
+                    )
+                }
+                crowd.firstOrNull()?.let { pet ->
+                    PetImage(
+                        pet.id, pet.name,
+                        Modifier
+                            .align(Alignment.Center)
+                            .size(hero)
+                            .breathing(seed = pet.id, intensity = 1.4f)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onPetClick(pet.id) }
+                    )
+                }
+                ConfettiBurst(key = state.caught.size, modifier = Modifier.matchParentSize())
+            }
+
+            Spacer(Modifier.height(22.dp))
+            Column(
+                Modifier
+                    .widthIn(max = 520.dp)
+                    .fillMaxWidth()
+                    .cozyCard(corner = 28.dp)
+                    .padding(horizontal = 22.dp, vertical = 20.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Paw(Apricot, Modifier.size(22.dp), angle = -14f)
+                    Spacer(Modifier.width(10.dp))
+                    Text("Але це ще не кінець…", style = MaterialTheme.typography.titleMedium)
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "Кажуть, у далеких лісах ще чути незнайоме шурхотіння. " +
+                        "Нові чарівнятка можуть з'явитися будь-якої миті — тож не зупиняйся і гуляй далі!",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+            Spacer(Modifier.height(24.dp))
         }
     }
 }
